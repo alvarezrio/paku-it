@@ -52,7 +52,9 @@ class DeviceResource extends Resource implements HasShieldPermissions
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['user']); // Eager loading untuk performa
+            ->with(['user']) // Eager loading untuk performa
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc'); // Secondary sort untuk konsistensi pagination
     }
 
     public static function form(Form $form): Form
@@ -431,7 +433,7 @@ class DeviceResource extends Resource implements HasShieldPermissions
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ;
     }
 
     public static function infolist(Infolist $infolist): Infolist
