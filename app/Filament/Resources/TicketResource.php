@@ -117,7 +117,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ->preload()
                             ->required()
                             ->default(fn () => auth()->id())
-                            ->disabled(fn () => !auth()->user()->hasAnyRole(['super_admin', 'Admin'])),
+                            ->disabled(fn () => !auth()->user()->hasAnyRole(['super_admin', 'Admin']))
+                            ->dehydrated(true), // Pastikan value tetap terkirim meskipun disabled
 
                         Forms\Components\Select::make('device_id')
                             ->label('Perangkat Terkait')
@@ -139,7 +140,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ->nullable()
                             ->reactive()
                             ->helperText('Pilih perangkat yang bermasalah (opsional)')
-                            ->disabled(fn ($record, Forms\Get $get) => ($record !== null && !auth()->user()->hasAnyRole(['super_admin', 'Admin'])) || $get('is_external_device')),
+                            ->disabled(fn ($record, Forms\Get $get) => ($record !== null && !auth()->user()->hasAnyRole(['super_admin', 'Admin'])) || $get('is_external_device'))
+                            ->dehydrated(true),
 
                         Forms\Components\Toggle::make('is_external_device')
                             ->label('Perangkat Luar/Lainnya')
@@ -158,7 +160,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ])
                             ->required()
                             ->default('hardware')
-                            ->disabled(fn ($record) => $record !== null && !auth()->user()->hasAnyRole(['super_admin', 'Admin'])),
+                            ->disabled(fn ($record) => $record !== null && !auth()->user()->hasAnyRole(['super_admin', 'Admin']))
+                            ->dehydrated(true),
 
                         Forms\Components\Select::make('priority')
                             ->label('Prioritas')
@@ -185,7 +188,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ->required()
                             ->maxLength(255)
                             ->placeholder('Ringkasan singkat masalah')
-                            ->disabled(fn ($record) => $record !== null && !auth()->user()->hasAnyRole(['super_admin', 'Admin'])),
+                            ->disabled(fn ($record) => $record !== null && !auth()->user()->hasAnyRole(['super_admin', 'Admin']))
+                            ->dehydrated(true),
 
                         Forms\Components\RichEditor::make('description')
                             ->label('Deskripsi')
@@ -199,7 +203,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                                 'orderedList',
                             ])
                             ->columnSpanFull()
-                            ->disabled(fn ($record) => $record !== null && !auth()->user()->hasAnyRole(['super_admin', 'Admin'])),
+                            ->disabled(fn ($record) => $record !== null && !auth()->user()->hasAnyRole(['super_admin', 'Admin']))
+                            ->dehydrated(true),
 
                         Forms\Components\FileUpload::make('attachments')
                             ->label('Lampiran Foto/File')
