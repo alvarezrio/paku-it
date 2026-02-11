@@ -38,7 +38,7 @@ class AuthController extends Controller
         } else {
             //jika gagal kirim response error
             return response()->json([
-                'message' => 'Invalid Credentials'
+                'message' => 'NIP atau password salah'
             ], 401);
         }
     }

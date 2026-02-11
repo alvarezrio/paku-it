@@ -29,11 +29,11 @@ class TicketResource extends Resource implements HasShieldPermissions
 
     protected static ?int $navigationSort = 1;
 
-    protected static ?string $navigationLabel = 'Tickets';
+    protected static ?string $navigationLabel = 'Tiket';
 
-    protected static ?string $modelLabel = 'Ticket';
+    protected static ?string $modelLabel = 'Tiket';
 
-    protected static ?string $pluralModelLabel = 'Tickets';
+    protected static ?string $pluralModelLabel = 'Tiket';
 
     // Scope: User biasa hanya lihat tiket sendiri, admin lihat semua
     public static function getEloquentQuery(): Builder
@@ -132,7 +132,7 @@ class TicketResource extends Resource implements HasShieldPermissions
                                         ]);
                                 }
                                 return Device::all()->mapWithKeys(fn ($device) => [
-                                    $device->id => $device->display_name . ' (' . ($device->user?->name ?? 'Unassigned') . ')'
+                                    $device->id => $device->display_name . ' (' . ($device->user?->name ?? 'Belum di-assign') . ')'
                                 ]);
                             })
                             ->searchable()

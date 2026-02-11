@@ -18,24 +18,24 @@ class ManageSetting extends SettingsPage
 
     protected static string $settings = KaidoSetting::class;
 
-    protected static ?string $navigationGroup = 'Settings';
+    protected static ?string $navigationGroup = 'Pengaturan';
 
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Section::make('Site Information')->columns(1)->schema([
+                Section::make('Informasi Situs')->columns(1)->schema([
                     TextInput::make('site_name')
-                        ->label('Site Name')
+                        ->label('Nama Situs')
                         ->required(),
                     Toggle::make('site_active')
-                        ->label('Site Active'),
+                        ->label('Situs Aktif'),
                     Toggle::make('registration_enabled')
-                        ->label('Registration Enabled'),
+                        ->label('Pendaftaran Diaktifkan'),
                     Toggle::make('password_reset_enabled')
-                        ->label('Password Reset Enabled'),
+                        ->label('Reset Password Diaktifkan'),
                     Toggle::make('sso_enabled')
-                        ->label('SSO Enabled'),
+                        ->label('SSO Diaktifkan'),
                 ]),
             ]);
     }

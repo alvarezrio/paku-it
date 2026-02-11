@@ -16,59 +16,68 @@ class DeviceImporter extends Importer
     {
         return [
             ImportColumn::make('type')
+                ->label('Tipe')
                 ->requiredMapping()
                 ->rules(['required', 'in:laptop,desktop,all-in-one,workstation']),
             ImportColumn::make('assigned_to')
-                ->label('Assigned To (User Email)')
+                ->label('Pengguna (Email User)')
                 ->rules(['nullable', 'email']),
             ImportColumn::make('hostname')
+                ->label('Hostname')
                 ->rules(['nullable', 'max:255']),
             ImportColumn::make('ip_address')
-                ->label('IP Address')
+                ->label('Alamat IP')
                 ->rules(['nullable', 'max:45']),
             ImportColumn::make('mac_address')
-                ->label('MAC Address')
+                ->label('Alamat MAC')
                 ->rules(['nullable', 'max:17']),
             ImportColumn::make('brand')
+                ->label('Merek')
                 ->rules(['nullable', 'max:255']),
             ImportColumn::make('model')
+                ->label('Model')
                 ->rules(['nullable', 'max:255']),
             ImportColumn::make('serial_number')
-                ->label('Serial Number')
+                ->label('Nomor Seri')
                 ->rules(['nullable', 'max:255']),
             ImportColumn::make('asset_tag')
-                ->label('Asset Tag')
+                ->label('Tag Aset')
                 ->rules(['nullable', 'max:255']),
             ImportColumn::make('os')
-                ->label('Operating System')
+                ->label('Sistem Operasi')
                 ->rules(['nullable', 'max:255']),
             ImportColumn::make('os_version')
-                ->label('OS Version')
+                ->label('Versi OS')
                 ->rules(['nullable', 'max:255']),
             ImportColumn::make('processor')
+                ->label('Prosesor')
                 ->rules(['nullable', 'max:255']),
             ImportColumn::make('ram')
                 ->label('RAM')
                 ->rules(['nullable', 'max:255']),
             ImportColumn::make('storage_type')
-                ->label('Storage Type')
+                ->label('Tipe Penyimpanan')
                 ->rules(['nullable', 'in:SSD,HDD,NVMe,Hybrid']),
             ImportColumn::make('storage_capacity')
-                ->label('Storage Capacity')
+                ->label('Kapasitas Penyimpanan')
                 ->rules(['nullable', 'max:255']),
             ImportColumn::make('condition')
+                ->label('Kondisi')
                 ->rules(['nullable', 'in:excellent,good,fair,poor,broken']),
             ImportColumn::make('status')
+                ->label('Status')
                 ->rules(['nullable', 'in:active,inactive,maintenance,retired']),
             ImportColumn::make('location')
+                ->label('Lokasi')
                 ->rules(['nullable', 'max:255']),
             ImportColumn::make('purchase_date')
-                ->label('Purchase Date')
+                ->label('Tanggal Pembelian')
                 ->rules(['nullable', 'date']),
             ImportColumn::make('warranty_expiry')
-                ->label('Warranty Expiry')
+                ->label('Masa Garansi Habis')
                 ->rules(['nullable', 'date']),
             ImportColumn::make('notes')
+                ->label('Catatan')
                 ->rules(['nullable']),
         ];
     }
@@ -112,10 +121,10 @@ class DeviceImporter extends Importer
 
     public static function getCompletedNotificationBody(Import $import): string
     {
-        $body = 'Your device import has completed and ' . number_format($import->successful_rows) . ' ' . str('row')->plural($import->successful_rows) . ' imported.';
+        $body = 'Impor perangkat telah selesai dan ' . number_format($import->successful_rows) . ' baris berhasil diimpor.';
 
         if ($failedRowsCount = $import->getFailedRowsCount()) {
-            $body .= ' ' . number_format($failedRowsCount) . ' ' . str('row')->plural($failedRowsCount) . ' failed to import.';
+            $body .= ' ' . number_format($failedRowsCount) . ' baris gagal diimpor.';
         }
 
         return $body;

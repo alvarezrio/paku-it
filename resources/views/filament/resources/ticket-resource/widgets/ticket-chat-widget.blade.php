@@ -29,14 +29,14 @@
                                         {{ $response->user->name }}
                                         @if($isAdmin)
                                             <span class="inline-flex items-center ml-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
-                                                IT Support
+                                                Admin IT
                                             </span>
                                         @endif
                                     </span>
                                     @if($response->is_internal_note)
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                                             <x-heroicon-m-lock-closed class="w-3 h-3 mr-0.5" />
-                                            Internal
+                                            Catatan Internal
                                         </span>
                                     @endif
                                 </div>

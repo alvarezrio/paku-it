@@ -16,26 +16,35 @@ class ArticleExporter extends Exporter
         return [
             ExportColumn::make('id')
                 ->label('ID'),
-            ExportColumn::make('title'),
-            ExportColumn::make('slug'),
+            ExportColumn::make('title')
+                ->label('Judul'),
+            ExportColumn::make('slug')
+                ->label('Slug'),
             ExportColumn::make('author_name')
-                ->label('Author'),
-            ExportColumn::make('category'),
-            ExportColumn::make('status'),
-            ExportColumn::make('content'),
-            ExportColumn::make('views'),
-            ExportColumn::make('published_at'),
-            ExportColumn::make('created_at'),
-            ExportColumn::make('updated_at'),
+                ->label('Penulis'),
+            ExportColumn::make('category')
+                ->label('Kategori'),
+            ExportColumn::make('status')
+                ->label('Status'),
+            ExportColumn::make('content')
+                ->label('Konten'),
+            ExportColumn::make('views')
+                ->label('Dilihat'),
+            ExportColumn::make('published_at')
+                ->label('Diterbitkan Pada'),
+            ExportColumn::make('created_at')
+                ->label('Dibuat Pada'),
+            ExportColumn::make('updated_at')
+                ->label('Diperbarui Pada'),
         ];
     }
 
     public static function getCompletedNotificationBody(Export $export): string
     {
-        $body = 'Your article export has completed and ' . number_format($export->successful_rows) . ' ' . str('row')->plural($export->successful_rows) . ' exported.';
+        $body = 'Ekspor artikel telah selesai dan ' . number_format($export->successful_rows) . ' baris berhasil diekspor.';
 
         if ($failedRowsCount = $export->getFailedRowsCount()) {
-            $body .= ' ' . number_format($failedRowsCount) . ' ' . str('row')->plural($failedRowsCount) . ' failed to export.';
+            $body .= ' ' . number_format($failedRowsCount) . ' baris gagal diekspor.';
         }
 
         return $body;

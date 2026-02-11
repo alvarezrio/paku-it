@@ -15,7 +15,7 @@
         <div class="p-8">
             <div class="flex items-center justify-between mb-4">
                 <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                    {{ $article->category->name ?? 'Uncategorized' }}
+                    {{ $article->category->name ?? 'Tanpa Kategori' }}
                 </span>
                 <div class="text-sm text-gray-500 flex gap-4">
                     <span>📅 {{ $article->published_at->format('d M Y') }}</span>

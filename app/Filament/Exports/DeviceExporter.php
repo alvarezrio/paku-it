@@ -17,49 +17,59 @@ class DeviceExporter extends Exporter
             ExportColumn::make('id')
                 ->label('ID'),
             ExportColumn::make('user.name')
-                ->label('Assigned To'),
-            ExportColumn::make('type'),
+                ->label('Pengguna'),
+            ExportColumn::make('type')
+                ->label('Tipe'),
             ExportColumn::make('hostname'),
             ExportColumn::make('ip_address')
-                ->label('IP Address'),
+                ->label('Alamat IP'),
             ExportColumn::make('mac_address')
-                ->label('MAC Address'),
-            ExportColumn::make('brand'),
-            ExportColumn::make('model'),
+                ->label('Alamat MAC'),
+            ExportColumn::make('brand')
+                ->label('Merek'),
+            ExportColumn::make('model')
+                ->label('Model'),
             ExportColumn::make('serial_number')
-                ->label('Serial Number'),
+                ->label('Nomor Seri'),
             ExportColumn::make('asset_tag')
-                ->label('Asset Tag'),
+                ->label('Tag Aset'),
             ExportColumn::make('os')
-                ->label('Operating System'),
+                ->label('Sistem Operasi'),
             ExportColumn::make('os_version')
-                ->label('OS Version'),
-            ExportColumn::make('processor'),
+                ->label('Versi OS'),
+            ExportColumn::make('processor')
+                ->label('Prosesor'),
             ExportColumn::make('ram')
                 ->label('RAM'),
             ExportColumn::make('storage_type')
-                ->label('Storage Type'),
+                ->label('Tipe Penyimpanan'),
             ExportColumn::make('storage_capacity')
-                ->label('Storage Capacity'),
-            ExportColumn::make('condition'),
-            ExportColumn::make('status'),
-            ExportColumn::make('location'),
+                ->label('Kapasitas Penyimpanan'),
+            ExportColumn::make('condition')
+                ->label('Kondisi'),
+            ExportColumn::make('status')
+                ->label('Status'),
+            ExportColumn::make('location')
+                ->label('Lokasi'),
             ExportColumn::make('purchase_date')
-                ->label('Purchase Date'),
+                ->label('Tanggal Pembelian'),
             ExportColumn::make('warranty_expiry')
-                ->label('Warranty Expiry'),
-            ExportColumn::make('notes'),
-            ExportColumn::make('created_at'),
-            ExportColumn::make('updated_at'),
+                ->label('Masa Garansi Habis'),
+            ExportColumn::make('notes')
+                ->label('Catatan'),
+            ExportColumn::make('created_at')
+                ->label('Dibuat Pada'),
+            ExportColumn::make('updated_at')
+                ->label('Diperbarui Pada'),
         ];
     }
 
     public static function getCompletedNotificationBody(Export $export): string
     {
-        $body = 'Your device export has completed and ' . number_format($export->successful_rows) . ' ' . str('row')->plural($export->successful_rows) . ' exported.';
+        $body = 'Ekspor perangkat telah selesai dan ' . number_format($export->successful_rows) . ' baris berhasil diekspor.';
 
         if ($failedRowsCount = $export->getFailedRowsCount()) {
-            $body .= ' ' . number_format($failedRowsCount) . ' ' . str('row')->plural($failedRowsCount) . ' failed to export.';
+            $body .= ' ' . number_format($failedRowsCount) . ' baris gagal diekspor.';
         }
 
         return $body;

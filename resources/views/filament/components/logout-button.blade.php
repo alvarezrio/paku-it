@@ -8,7 +8,7 @@
             labeled-from="sm"
             tag="button"
         >
-            {{ __('Sign Out') }}
+            Keluar
         </x-filament::button>
     </form>
 </div>
