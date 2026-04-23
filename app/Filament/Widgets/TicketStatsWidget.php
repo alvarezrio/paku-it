@@ -6,7 +6,8 @@ use App\Models\Ticket;
 use Filament\Widgets\Widget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Cache;
-use App\Settings\ModuleSettings; // Import ModuleSettings
+use App\Settings\ModuleSettings;
+use Illuminate\Support\Facades\Auth; // Import ModuleSettings
 
 class TicketStatsWidget extends Widget
 {
@@ -20,7 +21,19 @@ class TicketStatsWidget extends Widget
 
     public static function canView(): bool
     {
-        return app(ModuleSettings::class)->enable_helpdesk_tickets;
+        $user = Auth::user();
+
+        // Always check for module enablement first
+        if (!app(ModuleSettings::class)->enable_helpdesk_tickets) {
+            return false;
+        }
+        
+        // Return false if there is no authenticated user or if the user has the 'Member' role.
+        if (!$user || $user->hasRole('Member')) {
+            return false;
+        }
+
+        return true;
     }
 
     public function getStats(): array
