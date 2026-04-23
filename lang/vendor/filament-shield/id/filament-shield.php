@@ -9,7 +9,7 @@ return [
 
     'column.name' => 'Nama',
     'column.guard_name' => 'Nama Penjaga',
-    'column.roles' => 'Peran',
+    'column.roles' => 'Role',
     'column.permissions' => 'Izin',
     'column.updated_at' => 'Dirubah',
 
@@ -23,7 +23,7 @@ return [
     'field.guard_name' => 'Nama Penjaga',
     'field.permissions' => 'Izin',
     'field.select_all.name' => 'Pilih Semua',
-    'field.select_all.message' => 'Aktifkan semua izin yang <span class="text-primary font-medium">Tersedia</span> untuk Peran ini.',
+    'field.select_all.message' => 'Aktifkan semua izin yang <span class="text-primary font-medium">Tersedia</span> untuk Role ini.',
 
     /*
     |--------------------------------------------------------------------------
@@ -31,11 +31,11 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'nav.group' => 'Pelindung',
-    'nav.role.label' => 'Peran',
+    'nav.group' => 'Shield',
+    'nav.role.label' => 'Role',
     'nav.role.icon' => 'heroicon-o-shield-check',
-    'resource.label.role' => 'Peran',
-    'resource.label.roles' => 'Peran',
+    'resource.label.role' => 'Role',
+    'resource.label.roles' => 'Role',
 
     /*
     |--------------------------------------------------------------------------

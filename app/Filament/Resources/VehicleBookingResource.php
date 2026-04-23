@@ -573,6 +573,10 @@ class VehicleBookingResource extends Resource implements HasShieldPermissions
                             ->title('Kendaraan berhasil dikembalikan')
                             ->success()
                             ->send();
+                        $userId = auth()->id();
+                        $isAdmin = auth()->user()->hasRole('super_admin');
+                        $cacheKey = "booking_badge_{$userId}_" . ($isAdmin ? 'admin' : 'user');
+                        Cache::forget($cacheKey);
                     })
                     ->modalHeading('Pengembalian Kendaraan')
                     ->modalDescription(fn (VehicleBooking $record) => "Kendaraan: {$record->vehicle->plate_number} - {$record->vehicle->brand} {$record->vehicle->model}")
@@ -601,6 +605,10 @@ class VehicleBookingResource extends Resource implements HasShieldPermissions
                             ->title('Peminjaman dibatalkan')
                             ->warning()
                             ->send();
+                        $userId = auth()->id();
+                        $isAdmin = auth()->user()->hasRole('super_admin');
+                        $cacheKey = "booking_badge_{$userId}_" . ($isAdmin ? 'admin' : 'user');
+                        Cache::forget($cacheKey);
                     })
                     ->modalHeading('Batalkan Peminjaman')
                     ->modalDescription(fn (VehicleBooking $record) => "Apakah Anda yakin ingin membatalkan peminjaman {$record->booking_number}?")
@@ -612,11 +620,24 @@ class VehicleBookingResource extends Resource implements HasShieldPermissions
                 Tables\Actions\EditAction::make()
                     ->visible(fn (VehicleBooking $record) => $record->canBeEdited()),
                 Tables\Actions\DeleteAction::make()
-                    ->visible(fn () => auth()->user()->hasRole('super_admin')),
+                    ->visible(fn () => auth()->user()->hasRole('super_admin'))
+                    ->after(function () {
+                        $userId = auth()->id();
+                        $isAdmin = auth()->user()->hasRole('super_admin');
+                        $cacheKey = "booking_badge_{$userId}_" . ($isAdmin ? 'admin' : 'user');
+                        Cache::forget($cacheKey);
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                    ->after(function () {
+                        $userId = auth()->id();
+                        $isAdmin = auth()->user()->hasRole('super_admin');
+                        $cacheKey = "booking_badge_{$userId}_" . ($isAdmin ? 'admin' : 'user');
+                        Cache::forget($cacheKey);
+                    }),
+
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
