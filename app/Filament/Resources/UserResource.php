@@ -25,6 +25,7 @@ use STS\FilamentImpersonate\Tables\Actions\Impersonate;
 use Filament\Infolists\Components\Section as InfolistSection;
 use Spatie\Permission\Models\Role;
 use Filament\Notifications\Notification;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class UserResource extends Resource
 {
@@ -35,6 +36,15 @@ class UserResource extends Resource
     protected static ?string $modelLabel = 'User';
 
     protected static ?string $pluralModelLabel = 'Daftar User';
+
+    protected static ?string $navigationGroup = 'Manajemen Pengguna';
+
+    protected static ?int $navigationSort = 1;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return app(ModuleSettings::class)->enable_user_management;
+    }
 
     public static function form(Form $form): Form
     {

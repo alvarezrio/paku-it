@@ -6,6 +6,7 @@ use App\Models\Device;
 use Filament\Widgets\Widget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Cache;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class DeviceStatsWidget extends Widget
 {
@@ -19,7 +20,7 @@ class DeviceStatsWidget extends Widget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasRole('super_admin');
+        return app(ModuleSettings::class)->enable_inventory && auth()->user()->hasRole('super_admin');
     }
 
     public function getStats(): array

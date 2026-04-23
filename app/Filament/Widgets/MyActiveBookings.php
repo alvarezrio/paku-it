@@ -7,6 +7,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class MyActiveBookings extends BaseWidget
 {
@@ -89,7 +90,7 @@ class MyActiveBookings extends BaseWidget
 
     public static function canView(): bool
     {
-        return VehicleBooking::where('user_id', auth()->id())
+        return app(ModuleSettings::class)->enable_vehicle_booking && VehicleBooking::where('user_id', auth()->id())
             ->whereIn('status', ['approved', 'in_use'])
             ->exists();
     }

@@ -6,6 +6,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleBooking;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class VehicleAvailabilityCalendar extends Widget
 {
@@ -16,6 +17,12 @@ class VehicleAvailabilityCalendar extends Widget
     protected static ?int $sort = 2;
 
     protected int | string | array $columnSpan = 'full';
+
+    // Implement canView method
+    public static function canView(): bool
+    {
+        return app(ModuleSettings::class)->enable_vehicle_booking;
+    }
 
     public ?int $selectedVehicleId = null;
 

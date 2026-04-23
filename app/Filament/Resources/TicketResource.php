@@ -18,6 +18,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class TicketResource extends Resource implements HasShieldPermissions
 {
@@ -34,6 +35,11 @@ class TicketResource extends Resource implements HasShieldPermissions
     protected static ?string $modelLabel = 'Tiket';
 
     protected static ?string $pluralModelLabel = 'Tiket';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return app(ModuleSettings::class)->enable_helpdesk_tickets;
+    }
 
     // Scope: User biasa hanya lihat tiket sendiri, admin lihat semua
     public static function getEloquentQuery(): Builder

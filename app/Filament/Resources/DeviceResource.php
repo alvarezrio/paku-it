@@ -20,6 +20,7 @@ use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Actions\ImportAction;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class DeviceResource extends Resource implements HasShieldPermissions
 {
@@ -36,6 +37,11 @@ class DeviceResource extends Resource implements HasShieldPermissions
     protected static ?string $modelLabel = 'Device';
 
     protected static ?string $pluralModelLabel = 'Device';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return app(ModuleSettings::class)->enable_inventory;
+    }
 
     public static function getPermissionPrefixes(): array
     {
@@ -56,6 +62,7 @@ class DeviceResource extends Resource implements HasShieldPermissions
             ->orderBy('created_at', 'desc')
             ->orderBy('id', 'desc'); // Secondary sort untuk konsistensi pagination
     }
+
 
     public static function form(Form $form): Form
     {

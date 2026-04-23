@@ -13,6 +13,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Settings\ModuleSettings;
 
 class TicketReport extends Page implements HasForms
 {
@@ -310,6 +311,6 @@ class TicketReport extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        return auth()->user()->hasRole('super_admin');
+        return app(ModuleSettings::class)->enable_helpdesk_tickets && auth()->user()->hasRole('super_admin');
     }
 }

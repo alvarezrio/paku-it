@@ -6,6 +6,7 @@ use App\Models\Ticket;
 use Filament\Widgets\Widget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Cache;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class TicketStatsWidget extends Widget
 {
@@ -19,7 +20,7 @@ class TicketStatsWidget extends Widget
 
     public static function canView(): bool
     {
-        return true; // Semua user bisa melihat statistik tiket miliknya
+        return app(ModuleSettings::class)->enable_helpdesk_tickets;
     }
 
     public function getStats(): array

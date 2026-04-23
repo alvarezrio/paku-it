@@ -20,6 +20,8 @@ class ManageSetting extends SettingsPage
 
     protected static ?string $navigationGroup = 'Pengaturan';
 
+    protected static ?int $navigationSort = 1;
+
     public function form(Form $form): Form
     {
         return $form

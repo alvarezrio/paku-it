@@ -16,6 +16,7 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class RoleResource extends Resource implements HasShieldPermissions
 {
@@ -160,14 +161,12 @@ class RoleResource extends Resource implements HasShieldPermissions
 
     public static function shouldRegisterNavigation(): bool
     {
-        return Utils::isResourceNavigationRegistered();
+        return app(ModuleSettings::class)->enable_user_management && Utils::isResourceNavigationRegistered();
     }
 
     public static function getNavigationGroup(): ?string
     {
-        return Utils::isResourceNavigationGroupEnabled()
-            ? __('filament-shield::filament-shield.nav.group')
-            : '';
+        return 'Manajemen Pengguna';
     }
 
     public static function getNavigationLabel(): string
@@ -180,9 +179,10 @@ class RoleResource extends Resource implements HasShieldPermissions
         return __('filament-shield::filament-shield.nav.role.icon');
     }
 
+
     public static function getNavigationSort(): ?int
     {
-        return Utils::getResourceNavigationSort();
+        return 2;
     }
 
     public static function getSlug(): string

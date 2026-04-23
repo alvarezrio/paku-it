@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class DeviceAttributeResource extends Resource implements HasShieldPermissions
 {
@@ -30,6 +31,11 @@ class DeviceAttributeResource extends Resource implements HasShieldPermissions
     protected static ?string $modelLabel = 'Atribut Device';
 
     protected static ?string $pluralModelLabel = 'Atribut Device';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return app(ModuleSettings::class)->enable_inventory;
+    }
 
     public static function getPermissionPrefixes(): array
     {

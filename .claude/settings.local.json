@@ -24,7 +24,11 @@
       "Bash(taskkill:*)",
       "Bash(composer dump-autoload:*)",
       "Bash(composer require:*)",
-      "Bash(powershell -Command \"$input | Select-Object -Last 100\")"
+      "Bash(powershell -Command \"$input | Select-Object -Last 100\")",
+      "Bash(for f in app/Filament/Pages/TicketReport.php app/Filament/Pages/VehicleCalendar.php app/Filament/Resources/ArticleResource.php app/Filament/Resources/TicketResource.php app/Filament/Widgets/TicketStatsWidget.php app/Filament/Widgets/VehicleBookingStats.php)",
+      "Bash(do echo \"Checking $f...\")",
+      "Bash(done)",
+      "Bash(for f in app/Filament/Resources/CategoryResource.php app/Filament/Resources/DeviceAttributeResource.php app/Filament/Resources/DeviceResource.php app/Filament/Resources/RoleResource.php app/Filament/Resources/UserResource.php app/Filament/Resources/VehicleBookingResource.php app/Filament/Resources/VehicleResource.php app/Filament/Widgets/DeviceStatsWidget.php app/Filament/Widgets/MyActiveBookings.php app/Filament/Widgets/RecentTicketsWidget.php app/Filament/Widgets/VehicleAvailabilityCalendar.php)"
     ]
   }
 }

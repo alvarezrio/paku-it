@@ -14,6 +14,7 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class VehicleResource extends Resource implements HasShieldPermissions
 {
@@ -31,6 +32,12 @@ class VehicleResource extends Resource implements HasShieldPermissions
 
     protected static ?string $pluralModelLabel = 'Kendaraan';
 
+    // Implement shouldRegisterNavigation method
+    public static function shouldRegisterNavigation(): bool
+    {
+        return app(ModuleSettings::class)->enable_vehicle_booking;
+    }
+
     public static function getPermissionPrefixes(): array
     {
         return [
@@ -42,6 +49,7 @@ class VehicleResource extends Resource implements HasShieldPermissions
             'delete_any',
         ];
     }
+
 
     public static function form(Form $form): Form
     {

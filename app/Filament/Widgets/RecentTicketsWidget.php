@@ -8,6 +8,7 @@ use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\HtmlString;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class RecentTicketsWidget extends BaseWidget
 {
@@ -17,7 +18,7 @@ class RecentTicketsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasRole('super_admin');
+        return app(ModuleSettings::class)->enable_helpdesk_tickets && auth()->user()->hasRole('super_admin');
     }
 
     protected static ?string $heading = 'Widget Tiket Terbuka (Admin)';

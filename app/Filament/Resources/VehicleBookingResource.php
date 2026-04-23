@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\VehicleBookingResource\Pages;
+use App\Settings\ModuleSettings;
 use App\Models\Vehicle;
 use App\Models\VehicleBooking;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
@@ -33,6 +34,11 @@ class VehicleBookingResource extends Resource implements HasShieldPermissions
     protected static ?string $modelLabel = 'Peminjaman';
 
     protected static ?string $pluralModelLabel = 'Peminjaman KDO';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return app(ModuleSettings::class)->enable_vehicle_booking;
+    }
 
     public static function getEloquentQuery(): Builder
     {

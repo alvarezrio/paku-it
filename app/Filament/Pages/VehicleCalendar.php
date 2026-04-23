@@ -6,6 +6,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleBooking;
 use Filament\Pages\Page;
 use Illuminate\Support\Carbon;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class VehicleCalendar extends Page
 {
@@ -20,6 +21,11 @@ class VehicleCalendar extends Page
     protected static ?string $navigationLabel = 'Kalender KDO';
 
     protected static ?string $title = 'Kalender Ketersediaan KDO';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return app(ModuleSettings::class)->enable_vehicle_booking;
+    }
 
     public ?int $selectedVehicleId = null;
 

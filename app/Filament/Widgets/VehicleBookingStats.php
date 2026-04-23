@@ -7,12 +7,19 @@ use App\Models\VehicleBooking;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Cache;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class VehicleBookingStats extends BaseWidget
 {
     protected static ?string $pollingInterval = '60s';
 
     protected static ?int $sort = 1;
+
+    // Implement canView method
+    public static function canView(): bool
+    {
+        return app(ModuleSettings::class)->enable_vehicle_booking;
+    }
 
     protected function getStats(): array
     {

@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use App\Settings\ModuleSettings; // Import ModuleSettings
 
 class CategoryResource extends Resource
 {
@@ -19,9 +20,16 @@ class CategoryResource extends Resource
     
     protected static ?string $navigationGroup = 'Konten';
 
+    protected static ?int $navigationSort = 2;
+
     protected static ?string $modelLabel = 'Kategori';
 
     protected static ?string $pluralModelLabel = 'Kategori';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return app(ModuleSettings::class)->enable_blog;
+    }
 
     public static function form(Form $form): Form
     {

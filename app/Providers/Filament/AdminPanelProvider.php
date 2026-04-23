@@ -13,6 +13,7 @@ use DutchCodingCompany\FilamentSocialite\Provider;
 use Filament\Forms\Components\FileUpload;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -94,6 +95,21 @@ class AdminPanelProvider extends PanelProvider
             ->plugins(
                 $this->getPlugins()
             )
+            ->navigationGroups([
+                NavigationGroup::make('Helpdesk')
+                    ->icon('heroicon-o-ticket'),
+                NavigationGroup::make('Kendaraan Dinas')
+                    ->icon('heroicon-o-truck'),
+                NavigationGroup::make('Inventaris')
+                    ->icon('heroicon-o-computer-desktop'),
+                NavigationGroup::make('Konten')
+                    ->icon('heroicon-o-document-text'),
+                NavigationGroup::make('Manajemen Pengguna')
+                    ->icon('heroicon-o-users'),
+                NavigationGroup::make('Pengaturan')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->collapsed(),
+            ])
             ->databaseNotifications()
             ->renderHook(
                 PanelsRenderHook::USER_MENU_AFTER,
