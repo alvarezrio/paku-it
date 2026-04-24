@@ -16,23 +16,11 @@ export default defineConfig({
     build: {
         // Optimize chunk size
         chunkSizeWarningLimit: 1000,
-        rollupOptions: {
-            output: {
-                // Manual chunk splitting for better caching
-                manualChunks: {
-                    vendor: ['alpinejs'],
-                },
-            },
-        },
         // Enable minification
         minify: 'esbuild',
         // Generate source maps only in development
         sourcemap: false,
         // CSS code splitting
         cssCodeSplit: true,
-    },
-    // Optimize deps
-    optimizeDeps: {
-        include: ['alpinejs'],
     },
 });
