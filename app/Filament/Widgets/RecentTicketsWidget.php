@@ -70,14 +70,19 @@ class RecentTicketsWidget extends BaseWidget
                     ->limit(15),
 
                 Tables\Columns\TextColumn::make('category')
-                    ->label('Kategori')
+                    ->label('Layanan')
                     ->badge()
                     ->formatStateUsing(fn ($record) => $record->category_label)
                     ->color(fn (string $state): string => match ($state) {
-                        'hardware' => 'info',
-                        'software' => 'success',
-                        'network' => 'warning',
-                        'printer' => 'gray',
+                        'incident_management' => 'danger',
+                        'service_request'     => 'info',
+                        'user_support'        => 'success',
+                        'access_management'   => 'warning',
+                        'asset_management'    => 'primary',
+                        'change_management'   => 'warning',
+                        'network_support'     => 'info',
+                        'security_support'    => 'danger',
+                        'documentation_kb'    => 'gray',
                         default => 'gray',
                     }),
 

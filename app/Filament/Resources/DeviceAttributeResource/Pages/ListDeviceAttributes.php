@@ -13,7 +13,8 @@ class ListDeviceAttributes extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Rekam Data Atribut'),
         ];
     }
 }

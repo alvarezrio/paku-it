@@ -97,7 +97,7 @@ class AdminPanelProvider extends PanelProvider
                 $this->getPlugins()
             )
             ->navigationGroups([
-                NavigationGroup::make('Helpdesk')
+                NavigationGroup::make('IT Helpdesk')
                     ->icon('heroicon-o-ticket'),
                 NavigationGroup::make('Kendaraan Dinas')
                     ->icon('heroicon-o-truck'),

@@ -15,8 +15,10 @@ class ListTickets extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
-                ->label('Buat Tiket'),
+            Actions\Action::make('create')
+                ->label('Rekam Tiket')
+                ->icon('heroicon-o-plus')
+                ->url(TicketResource::getUrl('select-service')),
         ];
     }
 

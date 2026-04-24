@@ -3,13 +3,38 @@
 namespace App\Filament\Resources\TicketResource\Pages;
 
 use App\Filament\Resources\TicketResource;
-use App\Models\TicketAttachment;
+use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Storage;
 
 class CreateTicket extends CreateRecord
 {
     protected static string $resource = TicketResource::class;
+
+    /** Prefill form dengan kategori layanan yang dipilih dari halaman SelectTicketService */
+    protected function fillForm(): void
+    {
+        $this->callHook('beforeFill');
+
+        $category = request()->query('category');
+
+        $this->form->fill(array_filter([
+            'category' => $category,
+        ]));
+
+        $this->callHook('afterFill');
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\Action::make('back')
+                ->label('Pilih Layanan Lain')
+                ->icon('heroicon-o-arrow-left')
+                ->color('gray')
+                ->url(TicketResource::getUrl('select-service')),
+        ];
+    }
 
     protected function getRedirectUrl(): string
     {

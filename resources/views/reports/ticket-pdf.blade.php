@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Tiket Helpdesk - {{ $startDate }} s/d {{ $endDate }}</title>
+    <title>Laporan Tiket IT Helpdesk - {{ $startDate }} s/d {{ $endDate }}</title>
     <style>
         * {
             margin: 0;
@@ -170,11 +170,15 @@
                 @foreach($categoryStats as $category => $count)
                 <tr>
                     <td>{{ match($category) {
-                        'hardware' => 'Hardware',
-                        'software' => 'Software',
-                        'network' => 'Jaringan',
-                        'printer' => 'Printer',
-                        'other' => 'Lainnya',
+                        'incident_management' => 'Incident Management',
+                        'service_request'     => 'Service Request',
+                        'user_support'        => 'User Support',
+                        'access_management'   => 'Access Management',
+                        'asset_management'    => 'Asset Management',
+                        'change_management'   => 'Change Management',
+                        'network_support'     => 'Network Support',
+                        'security_support'    => 'Security Support',
+                        'documentation_kb'    => 'Documentation & Knowledge Base',
                         default => $category,
                     } }}</td>
                     <td style="text-align: right;">{{ $count }}</td>
@@ -228,11 +232,15 @@
                     <td>{{ $ticket->created_at->format('d/m/Y') }}</td>
                     <td>{{ $ticket->user->name ?? '-' }}</td>
                     <td>{{ match($ticket->category) {
-                        'hardware' => 'Hardware',
-                        'software' => 'Software',
-                        'network' => 'Jaringan',
-                        'printer' => 'Printer',
-                        'other' => 'Lainnya',
+                        'incident_management' => 'Incident Management',
+                        'service_request'     => 'Service Request',
+                        'user_support'        => 'User Support',
+                        'access_management'   => 'Access Management',
+                        'asset_management'    => 'Asset Management',
+                        'change_management'   => 'Change Management',
+                        'network_support'     => 'Network Support',
+                        'security_support'    => 'Security Support',
+                        'documentation_kb'    => 'Documentation & Knowledge Base',
                         default => $ticket->category,
                     } }}</td>
                     <td>
@@ -272,7 +280,7 @@
     </div>
 
     <div class="footer">
-        <p>Dokumen ini dihasilkan secara otomatis oleh Sistem Helpdesk</p>
+        <p>Dokumen ini dihasilkan secara otomatis oleh Sistem IT Helpdesk</p>
     </div>
 </body>
 </html>

@@ -32,7 +32,7 @@ class DeviceResource extends Resource implements HasShieldPermissions
 
     protected static ?int $navigationSort = 1;
 
-    protected static ?string $navigationLabel = 'Device';
+    protected static ?string $navigationLabel = 'Daftar Perangkat';
 
     protected static ?string $modelLabel = 'Device';
 
@@ -66,20 +66,42 @@ class DeviceResource extends Resource implements HasShieldPermissions
 
     public static function form(Form $form): Form
     {
+        // Kelompok tipe untuk kondisi visibilitas
+        $isKomputer = fn (Forms\Get $get) => in_array($get('type'), ['laptop', 'desktop', 'all-in-one', 'workstation']);
+        $isPrinter  = fn (Forms\Get $get) => in_array($get('type'), ['printer', 'scanner']);
+        $isJaringan = fn (Forms\Get $get) => in_array($get('type'), ['router', 'switch', 'access-point']);
+        $hasNetwork = fn (Forms\Get $get) => in_array($get('type'), ['laptop', 'desktop', 'all-in-one', 'workstation', 'printer', 'scanner', 'router', 'switch', 'access-point']);
+
         return $form
             ->schema([
-                Forms\Components\Section::make('Informasi Device')
+                // ── SECTION 1: Informasi Dasar (semua tipe) ─────────────────
+                Forms\Components\Section::make('Informasi Dasar')
                     ->schema([
                         Forms\Components\Select::make('type')
-                            ->label('Tipe')
+                            ->label('Tipe Perangkat')
                             ->options([
-                                'laptop' => 'Laptop',
-                                'desktop' => 'Desktop',
-                                'all-in-one' => 'All-in-One',
-                                'workstation' => 'Workstation',
+                                'Komputer' => [
+                                    'laptop'      => 'Laptop',
+                                    'desktop'     => 'Desktop',
+                                    'all-in-one'  => 'All-in-One',
+                                    'workstation' => 'Workstation',
+                                ],
+                                'Printer / Scanner' => [
+                                    'printer' => 'Printer',
+                                    'scanner' => 'Scanner',
+                                ],
+                                'Perangkat Jaringan' => [
+                                    'router'       => 'Router',
+                                    'switch'       => 'Switch',
+                                    'access-point' => 'Access Point',
+                                ],
+                                'Lainnya' => [
+                                    'other' => 'Lainnya',
+                                ],
                             ])
                             ->required()
-                            ->default('desktop'),
+                            ->default('desktop')
+                            ->live(), // reactive — form berubah saat tipe diganti
 
                         Forms\Components\Select::make('user_id')
                             ->label('Pengguna')
@@ -87,34 +109,35 @@ class DeviceResource extends Resource implements HasShieldPermissions
                             ->searchable()
                             ->preload()
                             ->nullable()
-                            ->helperText('Kosongkan jika device belum digunakan'),
+                            ->helperText('Kosongkan jika perangkat belum digunakan'),
 
                         Forms\Components\TextInput::make('hostname')
+                            ->label(fn (Forms\Get $get) => match (true) {
+                                in_array($get('type'), ['printer', 'scanner']) => 'Nama Printer/Scanner',
+                                in_array($get('type'), ['other'])              => 'Nama Perangkat',
+                                default                                        => 'Hostname',
+                            })
                             ->required()
                             ->maxLength(255)
-                            ->placeholder('cth: PC150421XXX'),
-
-                        Forms\Components\TextInput::make('ip_address')
-                            ->label('IP Address')
-                            ->required()
-                            ->ip()
-                            ->maxLength(45)
-                            ->placeholder('cth: 10.9.1.XXX'),
-
-                        Forms\Components\TextInput::make('mac_address')
-                            ->label('MAC Address')
-                            ->maxLength(17)
-                            ->placeholder('cth: 00:1A:2B:3C:4D:5E'),
+                            ->placeholder(fn (Forms\Get $get) => match (true) {
+                                in_array($get('type'), ['printer', 'scanner']) => 'cth: Printer-LT2, Canon-MX',
+                                in_array($get('type'), ['other'])              => 'cth: Proyektor-R1',
+                                default                                        => 'cth: PC150421XXX',
+                            }),
 
                         Forms\Components\TextInput::make('brand')
                             ->label('Merek')
                             ->maxLength(255)
-                            ->placeholder('cth: Dell, HP, Lenovo'),
+                            ->placeholder(fn (Forms\Get $get) => match (true) {
+                                in_array($get('type'), ['printer', 'scanner']) => 'cth: Canon, Epson, HP',
+                                in_array($get('type'), ['router', 'switch', 'access-point']) => 'cth: Cisco, TP-Link, Mikrotik',
+                                default => 'cth: Dell, HP, Lenovo',
+                            }),
 
                         Forms\Components\TextInput::make('model')
                             ->label('Model')
                             ->maxLength(255)
-                            ->placeholder('cth: Latitude 5520'),
+                            ->placeholder('cth: MX922, RB750, Latitude 5520'),
 
                         Forms\Components\TextInput::make('serial_number')
                             ->label('Nomor Seri')
@@ -134,7 +157,26 @@ class DeviceResource extends Resource implements HasShieldPermissions
                             ->placeholder('cth: Lantai 2, Ruang A'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Spesifikasi Sistem')
+                // ── SECTION 2: Koneksi Jaringan (komputer + perangkat jaringan) ──
+                Forms\Components\Section::make('Koneksi Jaringan')
+                    ->schema([
+                        Forms\Components\TextInput::make('ip_address')
+                            ->label('IP Address')
+                            ->ip()
+                            ->maxLength(45)
+                            ->required(fn (Forms\Get $get) => in_array($get('type'), ['router', 'switch', 'access-point']))
+                            ->placeholder('cth: 10.9.1.XXX'),
+
+                        Forms\Components\TextInput::make('mac_address')
+                            ->label('MAC Address')
+                            ->maxLength(17)
+                            ->placeholder('cth: 00:1A:2B:3C:4D:5E'),
+                    ])
+                    ->columns(2)
+                    ->visible($hasNetwork),
+
+                // ── SECTION 3: Spesifikasi Komputer (laptop/desktop/dll) ─────
+                Forms\Components\Section::make('Spesifikasi Komputer')
                     ->schema([
                         Forms\Components\TextInput::make('os')
                             ->label('Sistem Operasi')
@@ -159,9 +201,9 @@ class DeviceResource extends Resource implements HasShieldPermissions
                         Forms\Components\Select::make('storage_type')
                             ->label('Tipe Penyimpanan')
                             ->options([
-                                'SSD' => 'SSD',
-                                'HDD' => 'HDD',
-                                'NVMe' => 'NVMe',
+                                'SSD'    => 'SSD',
+                                'HDD'    => 'HDD',
+                                'NVMe'   => 'NVMe',
                                 'Hybrid' => 'Hybrid',
                             ])
                             ->placeholder('Pilih tipe penyimpanan'),
@@ -170,18 +212,44 @@ class DeviceResource extends Resource implements HasShieldPermissions
                             ->label('Kapasitas Penyimpanan')
                             ->maxLength(255)
                             ->placeholder('cth: 512GB'),
-                    ])->columns(2),
+                    ])
+                    ->columns(2)
+                    ->visible($isKomputer),
 
+                // ── SECTION 4: Spesifikasi Printer / Scanner ─────────────────
+                Forms\Components\Section::make('Spesifikasi Printer / Scanner')
+                    ->schema([
+                        Forms\Components\Select::make('printer_connection')
+                            ->label('Jenis Koneksi')
+                            ->options([
+                                'USB'      => 'USB',
+                                'Network'  => 'Jaringan (LAN)',
+                                'Wireless' => 'Wireless / WiFi',
+                                'Bluetooth'=> 'Bluetooth',
+                            ])
+                            ->placeholder('Pilih jenis koneksi')
+                            ->helperText('Cara printer terhubung ke komputer'),
+
+                        Forms\Components\TextInput::make('printer_function')
+                            ->label('Fungsi')
+                            ->placeholder('cth: Print, Scan, Copy, Fax')
+                            ->helperText('Fungsi yang didukung perangkat')
+                            ->maxLength(255),
+                    ])
+                    ->columns(2)
+                    ->visible($isPrinter),
+
+                // ── SECTION 5: Status & Tanggal (semua tipe) ─────────────────
                 Forms\Components\Section::make('Status & Tanggal')
                     ->schema([
                         Forms\Components\Select::make('condition')
                             ->label('Kondisi')
                             ->options([
                                 'excellent' => 'Sangat Baik',
-                                'good' => 'Baik',
-                                'fair' => 'Cukup',
-                                'poor' => 'Buruk',
-                                'broken' => 'Rusak',
+                                'good'      => 'Baik',
+                                'fair'      => 'Cukup',
+                                'poor'      => 'Buruk',
+                                'broken'    => 'Rusak',
                             ])
                             ->default('good')
                             ->required(),
@@ -189,10 +257,10 @@ class DeviceResource extends Resource implements HasShieldPermissions
                         Forms\Components\Select::make('status')
                             ->label('Status')
                             ->options([
-                                'active' => 'Aktif',
-                                'inactive' => 'Nonaktif',
+                                'active'      => 'Aktif',
+                                'inactive'    => 'Nonaktif',
                                 'maintenance' => 'Perbaikan',
-                                'retired' => 'Pensiun',
+                                'retired'     => 'Pensiun',
                             ])
                             ->default('active')
                             ->required(),
@@ -204,6 +272,7 @@ class DeviceResource extends Resource implements HasShieldPermissions
                             ->label('Habis Masa Garansi'),
                     ])->columns(2),
 
+                // ── SECTION 6: Atribut Tambahan (dari DeviceAttribute) ────────
                 Forms\Components\Section::make('Atribut Tambahan')
                     ->schema(function () {
                         $attributes = DeviceAttribute::active()->ordered()->get();
@@ -244,13 +313,14 @@ class DeviceResource extends Resource implements HasShieldPermissions
                     ->columns(2)
                     ->visible(fn () => DeviceAttribute::active()->exists()),
 
+                // ── SECTION 7: Catatan ────────────────────────────────────────
                 Forms\Components\Section::make('Catatan')
                     ->schema([
                         Forms\Components\Textarea::make('notes')
                             ->label('Catatan')
                             ->columnSpanFull()
                             ->rows(3)
-                            ->placeholder('Catatan tambahan tentang device ini...'),
+                            ->placeholder('Catatan tambahan tentang perangkat ini...'),
                     ])->collapsible(),
             ]);
     }
@@ -268,12 +338,24 @@ class DeviceResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('type')
                     ->label('Tipe')
                     ->badge()
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'laptop'       => 'Laptop',
+                        'desktop'      => 'Desktop',
+                        'all-in-one'   => 'All-in-One',
+                        'workstation'  => 'Workstation',
+                        'printer'      => 'Printer',
+                        'scanner'      => 'Scanner',
+                        'router'       => 'Router',
+                        'switch'       => 'Switch',
+                        'access-point' => 'Access Point',
+                        'other'        => 'Lainnya',
+                        default        => $state,
+                    })
                     ->color(fn ($state) => match ($state) {
-                        'laptop' => 'info',
-                        'desktop' => 'success',
-                        'all-in-one' => 'warning',
-                        'workstation' => 'primary',
-                        default => 'gray',
+                        'laptop', 'desktop', 'all-in-one', 'workstation' => 'info',
+                        'printer', 'scanner'                              => 'warning',
+                        'router', 'switch', 'access-point'               => 'success',
+                        default                                           => 'gray',
                     }),
 
                 Tables\Columns\TextColumn::make('user.name')
@@ -372,12 +454,18 @@ class DeviceResource extends Resource implements HasShieldPermissions
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('type')
-                    ->label('Tipe')
+                    ->label('Tipe Perangkat')
                     ->options([
-                        'laptop' => 'Laptop',
-                        'desktop' => 'Desktop',
-                        'all-in-one' => 'All-in-One',
-                        'workstation' => 'Workstation',
+                        'laptop'       => 'Laptop',
+                        'desktop'      => 'Desktop',
+                        'all-in-one'   => 'All-in-One',
+                        'workstation'  => 'Workstation',
+                        'printer'      => 'Printer',
+                        'scanner'      => 'Scanner',
+                        'router'       => 'Router',
+                        'switch'       => 'Switch',
+                        'access-point' => 'Access Point',
+                        'other'        => 'Lainnya',
                     ]),
 
                 Tables\Filters\SelectFilter::make('status')
@@ -447,21 +535,32 @@ class DeviceResource extends Resource implements HasShieldPermissions
     {
         return $infolist
             ->schema([
-                Section::make('Informasi Device')->schema([
+                // ── Informasi Dasar ───────────────────────────────────────────
+                Section::make('Informasi Dasar')->schema([
                     TextEntry::make('type')
                         ->label('Tipe')
                         ->badge()
+                        ->formatStateUsing(fn ($state) => match ($state) {
+                            'laptop'       => 'Laptop',
+                            'desktop'      => 'Desktop',
+                            'all-in-one'   => 'All-in-One',
+                            'workstation'  => 'Workstation',
+                            'printer'      => 'Printer',
+                            'scanner'      => 'Scanner',
+                            'router'       => 'Router',
+                            'switch'       => 'Switch',
+                            'access-point' => 'Access Point',
+                            'other'        => 'Lainnya',
+                            default        => $state,
+                        })
                         ->color(fn ($state) => match ($state) {
-                            'laptop' => 'info',
-                            'desktop' => 'success',
-                            'all-in-one' => 'warning',
-                            'workstation' => 'primary',
-                            default => 'gray',
+                            'laptop', 'desktop', 'all-in-one', 'workstation' => 'info',
+                            'printer', 'scanner'                              => 'warning',
+                            'router', 'switch', 'access-point'               => 'success',
+                            default                                           => 'gray',
                         }),
                     TextEntry::make('user.name')->label('Pengguna')->default('Belum Ada'),
-                    TextEntry::make('hostname')->default('-'),
-                    TextEntry::make('ip_address')->label('IP Address')->default('-'),
-                    TextEntry::make('mac_address')->label('MAC Address')->default('-'),
+                    TextEntry::make('hostname')->label('Hostname / Nama')->default('-'),
                     TextEntry::make('brand')->label('Merek')->default('-'),
                     TextEntry::make('model')->label('Model')->default('-'),
                     TextEntry::make('serial_number')->label('Nomor Seri')->default('-'),
@@ -469,41 +568,88 @@ class DeviceResource extends Resource implements HasShieldPermissions
                     TextEntry::make('location')->label('Lokasi')->default('-'),
                 ])->columns(2),
 
-                Section::make('Spesifikasi Sistem')->schema([
+                // ── Koneksi Jaringan (komputer + perangkat jaringan) ─────────
+                Section::make('Koneksi Jaringan')->schema([
+                    TextEntry::make('ip_address')->label('IP Address')->default('-'),
+                    TextEntry::make('mac_address')->label('MAC Address')->default('-'),
+                ])->columns(2)
+                    ->visible(fn ($record) => in_array($record->type, [
+                        'laptop', 'desktop', 'all-in-one', 'workstation',
+                        'printer', 'scanner',
+                        'router', 'switch', 'access-point',
+                    ])),
+
+                // ── Spesifikasi Komputer ──────────────────────────────────────
+                Section::make('Spesifikasi Komputer')->schema([
                     TextEntry::make('os')->label('Sistem Operasi')->default('-'),
                     TextEntry::make('os_version')->label('Versi OS')->default('-'),
                     TextEntry::make('processor')->label('Prosesor')->default('-'),
                     TextEntry::make('ram')->label('RAM')->default('-'),
                     TextEntry::make('storage_type')->label('Tipe Penyimpanan')->default('-'),
                     TextEntry::make('storage_capacity')->label('Kapasitas Penyimpanan')->default('-'),
-                ])->columns(2),
+                ])->columns(2)
+                    ->visible(fn ($record) => in_array($record->type, [
+                        'laptop', 'desktop', 'all-in-one', 'workstation',
+                    ])),
 
+                // ── Spesifikasi Printer / Scanner ─────────────────────────────
+                Section::make('Spesifikasi Printer / Scanner')->schema([
+                    TextEntry::make('printer_connection')
+                        ->label('Jenis Koneksi')
+                        ->default('-')
+                        ->formatStateUsing(fn ($state) => match ($state) {
+                            'USB'       => 'USB',
+                            'Network'   => 'Jaringan (LAN)',
+                            'Wireless'  => 'Wireless / WiFi',
+                            'Bluetooth' => 'Bluetooth',
+                            default     => $state,
+                        }),
+                    TextEntry::make('printer_function')->label('Fungsi')->default('-'),
+                ])->columns(2)
+                    ->visible(fn ($record) => in_array($record->type, ['printer', 'scanner'])),
+
+                // ── Status & Tanggal ──────────────────────────────────────────
                 Section::make('Status & Tanggal')->schema([
                     TextEntry::make('condition')
                         ->label('Kondisi')
                         ->badge()
                         ->formatStateUsing(fn ($state) => match ($state) {
                             'excellent' => 'Sangat Baik',
-                            'good' => 'Baik',
-                            'fair' => 'Cukup',
-                            'poor' => 'Buruk',
-                            'broken' => 'Rusak',
-                            default => $state,
+                            'good'      => 'Baik',
+                            'fair'      => 'Cukup',
+                            'poor'      => 'Buruk',
+                            'broken'    => 'Rusak',
+                            default     => $state,
+                        })
+                        ->color(fn ($state) => match ($state) {
+                            'excellent' => 'success',
+                            'good'      => 'info',
+                            'fair'      => 'warning',
+                            'poor', 'broken' => 'danger',
+                            default     => 'gray',
                         }),
                     TextEntry::make('status')
                         ->label('Status')
                         ->badge()
                         ->formatStateUsing(fn ($state) => match ($state) {
-                            'active' => 'Aktif',
-                            'inactive' => 'Nonaktif',
+                            'active'      => 'Aktif',
+                            'inactive'    => 'Nonaktif',
                             'maintenance' => 'Perbaikan',
-                            'retired' => 'Pensiun',
-                            default => $state,
+                            'retired'     => 'Pensiun',
+                            default       => $state,
+                        })
+                        ->color(fn ($state) => match ($state) {
+                            'active'      => 'success',
+                            'inactive'    => 'gray',
+                            'maintenance' => 'warning',
+                            'retired'     => 'danger',
+                            default       => 'gray',
                         }),
-                    TextEntry::make('purchase_date')->label('Tanggal Pembelian')->date(),
-                    TextEntry::make('warranty_expiry')->label('Habis Masa Garansi')->date(),
+                    TextEntry::make('purchase_date')->label('Tanggal Pembelian')->date()->default('-'),
+                    TextEntry::make('warranty_expiry')->label('Habis Masa Garansi')->date()->default('-'),
                 ])->columns(2),
 
+                // ── Catatan ───────────────────────────────────────────────────
                 Section::make('Catatan')->schema([
                     TextEntry::make('notes')
                         ->label('Catatan')

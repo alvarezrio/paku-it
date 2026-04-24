@@ -26,11 +26,11 @@ class DeviceAttributeResource extends Resource implements HasShieldPermissions
 
     protected static ?int $navigationSort = 2;
 
-    protected static ?string $navigationLabel = 'Atribut Device';
+    protected static ?string $navigationLabel = 'Setting Informasi Perangkat';
 
-    protected static ?string $modelLabel = 'Atribut Device';
+    protected static ?string $modelLabel = 'Setting Informasi Perangkat';
 
-    protected static ?string $pluralModelLabel = 'Atribut Device';
+    protected static ?string $pluralModelLabel = 'Setting Informasi Perangkat';
 
     public static function shouldRegisterNavigation(): bool
     {

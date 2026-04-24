@@ -26,7 +26,7 @@ class TicketResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationIcon = 'heroicon-o-ticket';
 
-    protected static ?string $navigationGroup = 'Helpdesk';
+    protected static ?string $navigationGroup = 'IT Helpdesk';
 
     protected static ?int $navigationSort = 1;
 
@@ -156,16 +156,20 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ->afterStateUpdated(fn (Forms\Set $set, $state) => $state ? $set('device_id', null) : null),
 
                         Forms\Components\Select::make('category')
-                            ->label('Kategori')
+                            ->label('Layanan')
                             ->options([
-                                'hardware' => 'Hardware',
-                                'software' => 'Software',
-                                'network' => 'Jaringan',
-                                'printer' => 'Printer',
-                                'other' => 'Lainnya',
+                                'incident_management' => 'Incident Management',
+                                'service_request'     => 'Service Request',
+                                'user_support'        => 'User Support',
+                                'access_management'   => 'Access Management',
+                                'asset_management'    => 'Asset Management',
+                                'change_management'   => 'Change Management',
+                                'network_support'     => 'Network Support',
+                                'security_support'    => 'Security Support',
+                                'documentation_kb'    => 'Documentation & Knowledge Base',
                             ])
                             ->required()
-                            ->default('hardware')
+                            ->default('incident_management')
                             ->disabled(fn ($record) => $record !== null && !auth()->user()->hasAnyRole(['super_admin', 'Admin']))
                             ->dehydrated(true),
 
@@ -287,22 +291,30 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('category')
-                    ->label('Kategori')
+                    ->label('Layanan')
                     ->badge()
                     ->formatStateUsing(fn ($state) => match($state) {
-                        'hardware' => 'Hardware',
-                        'software' => 'Software',
-                        'network' => 'Jaringan',
-                        'printer' => 'Printer',
-                        'other' => 'Lainnya',
+                        'incident_management' => 'Incident Management',
+                        'service_request'     => 'Service Request',
+                        'user_support'        => 'User Support',
+                        'access_management'   => 'Access Management',
+                        'asset_management'    => 'Asset Management',
+                        'change_management'   => 'Change Management',
+                        'network_support'     => 'Network Support',
+                        'security_support'    => 'Security Support',
+                        'documentation_kb'    => 'Documentation & Knowledge Base',
                         default => $state,
                     })
                     ->color(fn (string $state): string => match ($state) {
-                        'hardware' => 'info',
-                        'software' => 'success',
-                        'network' => 'warning',
-                        'printer' => 'gray',
-                        'other' => 'gray',
+                        'incident_management' => 'danger',
+                        'service_request'     => 'info',
+                        'user_support'        => 'success',
+                        'access_management'   => 'warning',
+                        'asset_management'    => 'primary',
+                        'change_management'   => 'warning',
+                        'network_support'     => 'info',
+                        'security_support'    => 'danger',
+                        'documentation_kb'    => 'gray',
                         default => 'gray',
                     }),
 
@@ -389,13 +401,17 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ]),
 
                 Tables\Filters\SelectFilter::make('category')
-                    ->label('Kategori')
+                    ->label('Layanan')
                     ->options([
-                        'hardware' => 'Hardware',
-                        'software' => 'Software',
-                        'network' => 'Jaringan',
-                        'printer' => 'Printer',
-                        'other' => 'Lainnya',
+                        'incident_management' => 'Incident Management',
+                        'service_request'     => 'Service Request',
+                        'user_support'        => 'User Support',
+                        'access_management'   => 'Access Management',
+                        'asset_management'    => 'Asset Management',
+                        'change_management'   => 'Change Management',
+                        'network_support'     => 'Network Support',
+                        'security_support'    => 'Security Support',
+                        'documentation_kb'    => 'Documentation & Knowledge Base',
                     ]),
 
                 Tables\Filters\SelectFilter::make('assigned_to')
@@ -506,14 +522,18 @@ class TicketResource extends Resource implements HasShieldPermissions
                         TextEntry::make('user.name')
                             ->label('Pelapor'),
                         TextEntry::make('category')
-                            ->label('Kategori')
+                            ->label('Layanan')
                             ->badge()
                             ->formatStateUsing(fn ($state) => match($state) {
-                                'hardware' => 'Hardware',
-                                'software' => 'Software',
-                                'network' => 'Jaringan',
-                                'printer' => 'Printer',
-                                'other' => 'Lainnya',
+                                'incident_management' => 'Incident Management',
+                                'service_request'     => 'Service Request',
+                                'user_support'        => 'User Support',
+                                'access_management'   => 'Access Management',
+                                'asset_management'    => 'Asset Management',
+                                'change_management'   => 'Change Management',
+                                'network_support'     => 'Network Support',
+                                'security_support'    => 'Security Support',
+                                'documentation_kb'    => 'Documentation & Knowledge Base',
                                 default => $state,
                             }),
                         TextEntry::make('priority')
@@ -638,10 +658,11 @@ class TicketResource extends Resource implements HasShieldPermissions
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTickets::route('/'),
-            'create' => Pages\CreateTicket::route('/create'),
-            'view' => Pages\ViewTicket::route('/{record}'),
-            'edit' => Pages\EditTicket::route('/{record}/edit'),
+            'index'          => Pages\ListTickets::route('/'),
+            'select-service' => Pages\SelectTicketService::route('/select-service'),
+            'create'         => Pages\CreateTicket::route('/create'),
+            'view'           => Pages\ViewTicket::route('/{record}'),
+            'edit'           => Pages\EditTicket::route('/{record}/edit'),
         ];
     }
 }

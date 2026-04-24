@@ -11,6 +11,11 @@ class CreateDevice extends CreateRecord
     protected static string $resource = DeviceResource::class;
     protected static bool $canCreateAnother = false;
 
+    public function getTitle(): string
+    {
+        return 'Rekam Data Perangkat';
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // Remove dynamic_attributes from main data as they'll be saved separately

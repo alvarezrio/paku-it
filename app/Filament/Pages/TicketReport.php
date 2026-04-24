@@ -23,13 +23,13 @@ class TicketReport extends Page implements HasForms
 
     protected static string $view = 'filament.pages.ticket-report';
 
-    protected static ?string $navigationGroup = 'Helpdesk';
+    protected static ?string $navigationGroup = 'IT Helpdesk';
 
     protected static ?int $navigationSort = 2;
 
     protected static ?string $navigationLabel = 'Laporan Tiket';
 
-    protected static ?string $title = 'Laporan Tiket Helpdesk';
+    protected static ?string $title = 'Laporan Tiket IT Helpdesk';
 
     public ?string $period = 'monthly';
     public ?string $startDate = null;
@@ -227,11 +227,15 @@ class TicketReport extends Page implements HasForms
     public function getCategoryLabel(string $category): string
     {
         return match ($category) {
-            'hardware' => 'Hardware',
-            'software' => 'Software',
-            'network' => 'Jaringan',
-            'printer' => 'Printer',
-            'other' => 'Lainnya',
+            'incident_management' => 'Incident Management',
+            'service_request'     => 'Service Request',
+            'user_support'        => 'User Support',
+            'access_management'   => 'Access Management',
+            'asset_management'    => 'Asset Management',
+            'change_management'   => 'Change Management',
+            'network_support'     => 'Network Support',
+            'security_support'    => 'Security Support',
+            'documentation_kb'    => 'Documentation & Knowledge Base',
             default => $category,
         };
     }

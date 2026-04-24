@@ -31,7 +31,11 @@
       "Bash(for f in app/Filament/Resources/CategoryResource.php app/Filament/Resources/DeviceAttributeResource.php app/Filament/Resources/DeviceResource.php app/Filament/Resources/RoleResource.php app/Filament/Resources/UserResource.php app/Filament/Resources/VehicleBookingResource.php app/Filament/Resources/VehicleResource.php app/Filament/Widgets/DeviceStatsWidget.php app/Filament/Widgets/MyActiveBookings.php app/Filament/Widgets/RecentTicketsWidget.php app/Filament/Widgets/VehicleAvailabilityCalendar.php)",
       "Bash(test:*)",
       "Bash(git ls-tree:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(powershell -Command \"Get-Content ''A:\\\\proyek_magang\\\\edh-421\\\\storage\\\\logs\\\\laravel.log'' -Tail 60\")",
+      "Bash(powershell -Command:*)",
+      "Bash(Select-String -Pattern \"local.ERROR|Exception|previous exception\")",
+      "Bash(Select-Object -Last 20)"
     ]
   }
 }

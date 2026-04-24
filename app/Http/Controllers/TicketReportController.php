@@ -227,11 +227,15 @@ class TicketReportController extends Controller
     private function getCategoryLabel(string $category): string
     {
         return match ($category) {
-            'hardware' => 'Hardware',
-            'software' => 'Software',
-            'network' => 'Jaringan',
-            'printer' => 'Printer',
-            'other' => 'Lainnya',
+            'incident_management' => 'Incident Management',
+            'service_request'     => 'Service Request',
+            'user_support'        => 'User Support',
+            'access_management'   => 'Access Management',
+            'asset_management'    => 'Asset Management',
+            'change_management'   => 'Change Management',
+            'network_support'     => 'Network Support',
+            'security_support'    => 'Security Support',
+            'documentation_kb'    => 'Documentation & Knowledge Base',
             default => $category,
         };
     }
