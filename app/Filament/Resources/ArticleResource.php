@@ -205,7 +205,8 @@ class ArticleResource extends Resource implements HasShieldPermissions
                     ->searchable()
                     ->sortable()
                     ->limit(40)
-                    ->wrap(),
+                    ->wrap()
+                    ->tooltip(fn ($record) => $record->title),
 
                 Tables\Columns\TextColumn::make('author_name')
                     ->label('Penulis')

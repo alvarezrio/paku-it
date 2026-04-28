@@ -170,15 +170,15 @@
                 @foreach($categoryStats as $category => $count)
                 <tr>
                     <td>{{ match($category) {
-                        'incident_management' => 'Incident Management',
-                        'service_request'     => 'Service Request',
-                        'user_support'        => 'User Support',
-                        'access_management'   => 'Access Management',
-                        'asset_management'    => 'Asset Management',
-                        'change_management'   => 'Change Management',
-                        'network_support'     => 'Network Support',
-                        'security_support'    => 'Security Support',
-                        'documentation_kb'    => 'Documentation & Knowledge Base',
+                        'incident_management' => 'Manajemen Insiden',
+                        'service_request'     => 'Permintaan Layanan',
+                        'user_support'        => 'Dukungan Pengguna',
+                        'access_management'   => 'Manajemen Akses',
+                        'asset_management'    => 'Manajemen Aset',
+                        'change_management'   => 'Manajemen Perubahan',
+                        'network_support'     => 'Dukungan Jaringan',
+                        'security_support'    => 'Dukungan Keamanan',
+                        'documentation_kb'    => 'Dokumentasi & Basis Pengetahuan',
                         default => $category,
                     } }}</td>
                     <td style="text-align: right;">{{ $count }}</td>
@@ -232,15 +232,15 @@
                     <td>{{ $ticket->created_at->format('d/m/Y') }}</td>
                     <td>{{ $ticket->user->name ?? '-' }}</td>
                     <td>{{ match($ticket->category) {
-                        'incident_management' => 'Incident Management',
-                        'service_request'     => 'Service Request',
-                        'user_support'        => 'User Support',
-                        'access_management'   => 'Access Management',
-                        'asset_management'    => 'Asset Management',
-                        'change_management'   => 'Change Management',
-                        'network_support'     => 'Network Support',
-                        'security_support'    => 'Security Support',
-                        'documentation_kb'    => 'Documentation & Knowledge Base',
+                        'incident_management' => 'Manajemen Insiden',
+                        'service_request'     => 'Permintaan Layanan',
+                        'user_support'        => 'Dukungan Pengguna',
+                        'access_management'   => 'Manajemen Akses',
+                        'asset_management'    => 'Manajemen Aset',
+                        'change_management'   => 'Manajemen Perubahan',
+                        'network_support'     => 'Dukungan Jaringan',
+                        'security_support'    => 'Dukungan Keamanan',
+                        'documentation_kb'    => 'Dokumentasi & Basis Pengetahuan',
                         default => $ticket->category,
                     } }}</td>
                     <td>

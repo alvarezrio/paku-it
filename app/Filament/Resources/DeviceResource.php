@@ -18,6 +18,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Actions\ImportAction;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use App\Settings\ModuleSettings; // Import ModuleSettings
@@ -154,7 +155,13 @@ class DeviceResource extends Resource implements HasShieldPermissions
                         Forms\Components\TextInput::make('location')
                             ->label('Lokasi')
                             ->maxLength(255)
-                            ->placeholder('cth: Lantai 2, Ruang A'),
+                            ->datalist(['Lantai 1', 'Lantai 2', 'Lantai 3', 'Lantai 4', 'Basement'])
+                            ->placeholder('cth: Lantai 2'),
+
+                        Forms\Components\TextInput::make('responsible_section')
+                            ->label('Penanggung Jawab')
+                            ->maxLength(255)
+                            ->placeholder('cth: Seksi Pelayanan, Subbagian Umum, Seksi PDI'),
                     ])->columns(2),
 
                 // ── SECTION 2: Koneksi Jaringan (komputer + perangkat jaringan) ──
@@ -317,7 +324,7 @@ class DeviceResource extends Resource implements HasShieldPermissions
                 Forms\Components\Section::make('Catatan')
                     ->schema([
                         Forms\Components\Textarea::make('notes')
-                            ->label('Catatan')
+                            ->hiddenLabel()
                             ->columnSpanFull()
                             ->rows(3)
                             ->placeholder('Catatan tambahan tentang perangkat ini...'),
@@ -338,6 +345,7 @@ class DeviceResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('type')
                     ->label('Tipe')
                     ->badge()
+                    ->sortable()
                     ->formatStateUsing(fn ($state) => match ($state) {
                         'laptop'       => 'Laptop',
                         'desktop'      => 'Desktop',
@@ -366,6 +374,13 @@ class DeviceResource extends Resource implements HasShieldPermissions
                     ->badge()
                     ->color(fn ($state) => $state === 'Belum Ada' ? 'gray' : 'success'),
 
+                Tables\Columns\TextColumn::make('responsible_section')
+                    ->label('Penanggung Jawab')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->placeholder('-'),
+
                 Tables\Columns\TextColumn::make('location')
                     ->label('Lokasi')
                     ->searchable()
@@ -375,35 +390,42 @@ class DeviceResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('ip_address')
                     ->label('IP Address')
                     ->searchable()
+                    ->sortable()
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('brand')
                     ->label('Merek')
                     ->searchable()
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('model')
                     ->label('Model')
                     ->searchable()
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('serial_number')
                     ->label('No. Seri')
                     ->searchable()
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('os')
                     ->label('OS')
                     ->limit(20)
+                    ->sortable()
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('ram')
                     ->label('RAM')
+                    ->sortable()
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('condition')
                     ->label('Kondisi')
                     ->badge()
+                    ->sortable()
                     ->formatStateUsing(fn ($state) => match ($state) {
                         'excellent' => 'Sangat Baik',
                         'good' => 'Baik',
@@ -424,6 +446,7 @@ class DeviceResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
+                    ->sortable()
                     ->formatStateUsing(fn ($state) => match ($state) {
                         'active' => 'Aktif',
                         'inactive' => 'Nonaktif',
@@ -453,6 +476,54 @@ class DeviceResource extends Resource implements HasShieldPermissions
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\Filter::make('hostname')
+                    ->label('Hostname')
+                    ->form([
+                        Forms\Components\TextInput::make('value')
+                            ->label('Hostname')
+                            ->placeholder('cari hostname...')
+                            ->live(debounce: 400),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when($data['value'] ?? null, fn (Builder $q, $v) => $q->where('hostname', 'like', "%{$v}%"))),
+
+                Tables\Filters\Filter::make('ip_address')
+                    ->label('IP Address')
+                    ->form([
+                        Forms\Components\TextInput::make('value')
+                            ->label('IP Address')
+                            ->placeholder('cth: 10.9.1')
+                            ->live(debounce: 400),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when($data['value'] ?? null, fn (Builder $q, $v) => $q->where('ip_address', 'like', "%{$v}%"))),
+
+                Tables\Filters\Filter::make('brand_model')
+                    ->label('Merek / Model')
+                    ->form([
+                        Forms\Components\TextInput::make('value')
+                            ->label('Merek atau Model')
+                            ->placeholder('cth: Lenovo, OptiPlex')
+                            ->live(debounce: 400),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when($data['value'] ?? null, fn (Builder $q, $v) => $q->where(fn ($qq) => $qq
+                            ->where('brand', 'like', "%{$v}%")
+                            ->orWhere('model', 'like', "%{$v}%")))),
+
+                Tables\Filters\Filter::make('serial_number')
+                    ->label('No. Seri / Tag Aset')
+                    ->form([
+                        Forms\Components\TextInput::make('value')
+                            ->label('No. Seri / Tag Aset')
+                            ->placeholder('cth: SN-, AST-')
+                            ->live(debounce: 400),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when($data['value'] ?? null, fn (Builder $q, $v) => $q->where(fn ($qq) => $qq
+                            ->where('serial_number', 'like', "%{$v}%")
+                            ->orWhere('asset_tag', 'like', "%{$v}%")))),
+
                 Tables\Filters\SelectFilter::make('type')
                     ->label('Tipe Perangkat')
                     ->options([
@@ -497,6 +568,10 @@ class DeviceResource extends Resource implements HasShieldPermissions
                     ->label('Lokasi')
                     ->options(fn () => Device::query()->pluck('location', 'location')->unique()->filter()->sort()),
 
+                Tables\Filters\SelectFilter::make('responsible_section')
+                    ->label('Penanggung Jawab')
+                    ->options(fn () => Device::query()->pluck('responsible_section', 'responsible_section')->unique()->filter()->sort()),
+
                 Tables\Filters\TernaryFilter::make('assigned')
                     ->label('Status Penggunaan')
                     ->placeholder('Semua')
@@ -506,7 +581,11 @@ class DeviceResource extends Resource implements HasShieldPermissions
                         true: fn ($query) => $query->whereNotNull('user_id'),
                         false: fn ($query) => $query->whereNull('user_id'),
                     ),
-            ])
+            ], layout: FiltersLayout::AboveContentCollapsible)
+            ->filtersFormColumns(4)
+            ->deferFilters(false)
+            ->persistFiltersInSession()
+            ->persistSortInSession()
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->url(fn (Device $record): string => self::getUrl('view', ['record' => $record])),
@@ -566,6 +645,7 @@ class DeviceResource extends Resource implements HasShieldPermissions
                     TextEntry::make('serial_number')->label('Nomor Seri')->default('-'),
                     TextEntry::make('asset_tag')->label('Tag Aset')->default('-'),
                     TextEntry::make('location')->label('Lokasi')->default('-'),
+                    TextEntry::make('responsible_section')->label('Penanggung Jawab')->default('-'),
                 ])->columns(2),
 
                 // ── Koneksi Jaringan (komputer + perangkat jaringan) ─────────

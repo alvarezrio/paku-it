@@ -99,15 +99,15 @@ class Ticket extends Model
     public function getCategoryLabelAttribute(): string
     {
         return match($this->category) {
-            'incident_management' => 'Incident Management',
-            'service_request'     => 'Service Request',
-            'user_support'        => 'User Support',
-            'access_management'   => 'Access Management',
-            'asset_management'    => 'Asset Management',
-            'change_management'   => 'Change Management',
-            'network_support'     => 'Network Support',
-            'security_support'    => 'Security Support',
-            'documentation_kb'    => 'Documentation & Knowledge Base',
+            'incident_management' => 'Manajemen Insiden',
+            'service_request'     => 'Permintaan Layanan',
+            'user_support'        => 'Dukungan Pengguna',
+            'access_management'   => 'Manajemen Akses',
+            'asset_management'    => 'Manajemen Aset',
+            'change_management'   => 'Manajemen Perubahan',
+            'network_support'     => 'Dukungan Jaringan',
+            'security_support'    => 'Dukungan Keamanan',
+            'documentation_kb'    => 'Dokumentasi & Basis Pengetahuan',
             default => $this->category,
         };
     }
