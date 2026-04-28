@@ -17,8 +17,12 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
+use App\Models\Article;
 use App\Settings\ModuleSettings; // Import ModuleSettings
+use App\Settings\SlaSettings;
+use Illuminate\Support\HtmlString;
 
 class TicketResource extends Resource implements HasShieldPermissions
 {
@@ -131,11 +135,25 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ->options(function (Forms\Get $get) {
                                 $userId = $get('user_id');
                                 if ($userId) {
-                                    return Device::where('user_id', $userId)
-                                        ->get()
-                                        ->mapWithKeys(fn ($device) => [
-                                            $device->id => $device->display_name . ' (' . $device->type . ')'
-                                        ]);
+                                    $options = [];
+
+                                    $myDevices = Device::where('user_id', $userId)->get();
+                                    if ($myDevices->isNotEmpty()) {
+                                        $options['Perangkat Saya'] = $myDevices
+                                            ->mapWithKeys(fn ($device) => [
+                                                $device->id => $device->display_name . ' (' . $device->type . ')'
+                                            ])->toArray();
+                                    }
+
+                                    $sharedDevices = Device::whereNull('user_id')->get();
+                                    if ($sharedDevices->isNotEmpty()) {
+                                        $options['Perangkat Bersama'] = $sharedDevices
+                                            ->mapWithKeys(fn ($device) => [
+                                                $device->id => $device->display_name . ' (' . $device->type . ')'
+                                            ])->toArray();
+                                    }
+
+                                    return $options;
                                 }
                                 return Device::all()->mapWithKeys(fn ($device) => [
                                     $device->id => $device->display_name . ' (' . ($device->user?->name ?? 'Belum di-assign') . ')'
@@ -150,8 +168,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ->dehydrated(true),
 
                         Forms\Components\Toggle::make('is_external_device')
-                            ->label('Perangkat Luar/Lainnya')
-                            ->helperText('Centang jika perangkat yang bermasalah adalah printer, mesin fotokopi, atau perangkat lain di luar PC/Laptop Anda.')
+                            ->label('Perangkat Tidak Terdaftar')
+                            ->helperText('Centang jika perangkat tidak terdaftar di sistem (mesin fotokopi, proyektor, perangkat pribadi, dll).')
                             ->reactive()
                             ->afterStateUpdated(fn (Forms\Set $set, $state) => $state ? $set('device_id', null) : null),
 
@@ -199,7 +217,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ->maxLength(255)
                             ->placeholder('Ringkasan singkat masalah')
                             ->disabled(fn ($record) => $record !== null && !auth()->user()->hasAnyRole(['super_admin', 'Admin']))
-                            ->dehydrated(true),
+                            ->dehydrated(true)
+                            ->live(debounce: 500),
 
                         Forms\Components\RichEditor::make('description')
                             ->label('Deskripsi')
@@ -231,13 +250,59 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ->dehydrated(false),
                     ]),
 
+                Forms\Components\Section::make('Artikel KB Terkait')
+                    ->schema([
+                        Forms\Components\Placeholder::make('kb_suggestions')
+                            ->label('')
+                            ->content(function (Forms\Get $get) {
+                                $subject = trim($get('subject') ?? '');
+                                if (strlen($subject) < 4) {
+                                    return new HtmlString('<p class="text-sm text-gray-400 italic">Ketik minimal 4 karakter pada subjek untuk melihat artikel terkait...</p>');
+                                }
+
+                                $articles = Article::published()
+                                    ->where(fn($q) => $q
+                                        ->where('title', 'like', "%{$subject}%")
+                                        ->orWhere('content', 'like', "%{$subject}%")
+                                    )
+                                    ->limit(4)
+                                    ->get(['id', 'title', 'slug']);
+
+                                if ($articles->isEmpty()) {
+                                    return new HtmlString('<p class="text-sm text-gray-400 italic">Tidak ada artikel yang cocok.</p>');
+                                }
+
+                                $html = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
+                                foreach ($articles as $article) {
+                                    $url = route('filament.admin.resources.articles.view', $article);
+                                    $title = e($article->title);
+                                    $html .= <<<HTML
+                                        <a href="{$url}" target="_blank" class="flex items-center gap-2 p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                            <span class="truncate">{$title}</span>
+                                        </a>
+                                    HTML;
+                                }
+                                $html .= '</div>';
+
+                                return new HtmlString($html);
+                            })
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible()
+                    ->visible(fn () => app(ModuleSettings::class)->enable_blog),
+
                 Forms\Components\Section::make('Penanganan')
                     ->schema([
                         Forms\Components\Select::make('assigned_to')
                             ->label('Ditugaskan Ke')
                             ->options(function () {
                                 return User::role('Admin')
-                                    ->pluck('name', 'id');
+                                    ->withCount(['assignedTickets as active_tickets' => fn($q) =>
+                                        $q->whereIn('status', ['open', 'in_progress', 'waiting_for_user'])
+                                    ])
+                                    ->get()
+                                    ->mapWithKeys(fn($u) => [$u->id => "{$u->name} ({$u->active_tickets} aktif)"]);
                             })
                             ->searchable()
                             ->preload()
@@ -278,6 +343,29 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ->sortable()
                     ->copyable()
                     ->weight('bold'),
+
+                Tables\Columns\IconColumn::make('sla_status')
+                    ->label('SLA')
+                    ->state(function ($record) {
+                        if (!$record || !$record->sla_due_at || !$record->isOpen()) {
+                            return null;
+                        }
+                        return $record->isSlaOverdue() ? 'overdue' : 'ok';
+                    })
+                    ->icon(fn ($state) => match($state) {
+                        'overdue' => 'heroicon-s-exclamation-triangle',
+                        'ok'      => 'heroicon-s-check-circle',
+                        default   => null,
+                    })
+                    ->color(fn ($state) => match($state) {
+                        'overdue' => 'danger',
+                        'ok'      => 'success',
+                        default   => 'gray',
+                    })
+                    ->tooltip(fn ($record) => ($record && $record->sla_due_at)
+                        ? 'Batas SLA: ' . $record->sla_due_at->format('d M Y H:i')
+                        : null
+                    ),
 
                 Tables\Columns\TextColumn::make('subject')
                     ->label('Subjek')
@@ -431,6 +519,15 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ->query(fn (Builder $query) => $query->whereNull('assigned_to'))
                     ->toggle(),
 
+                Tables\Filters\Filter::make('sla_overdue')
+                    ->label('SLA Terlampaui')
+                    ->query(fn (Builder $query) => $query
+                        ->whereNotNull('sla_due_at')
+                        ->where('sla_due_at', '<', now())
+                        ->whereIn('status', ['open', 'in_progress', 'waiting_for_user'])
+                    )
+                    ->toggle(),
+
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         Forms\Components\DatePicker::make('from')
@@ -460,7 +557,11 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ->label('Tugaskan Ke')
                             ->options(function () {
                                 return User::role('Admin')
-                                    ->pluck('name', 'id');
+                                    ->withCount(['assignedTickets as active_tickets' => fn($q) =>
+                                        $q->whereIn('status', ['open', 'in_progress', 'waiting_for_user'])
+                                    ])
+                                    ->get()
+                                    ->mapWithKeys(fn($u) => [$u->id => "{$u->name} ({$u->active_tickets} aktif)"]);
                             })
                             ->required(),
                     ])
@@ -503,6 +604,77 @@ class TicketResource extends Resource implements HasShieldPermissions
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('bulk_assign')
+                        ->label('Tugaskan ke Admin')
+                        ->icon('heroicon-o-user-plus')
+                        ->color('warning')
+                        ->form([
+                            Forms\Components\Select::make('assigned_to')
+                                ->label('Tugaskan Ke')
+                                ->options(fn () => User::role('Admin')
+                                    ->withCount(['assignedTickets as active_tickets' => fn($q) =>
+                                        $q->whereIn('status', ['open', 'in_progress', 'waiting_for_user'])
+                                    ])
+                                    ->get()
+                                    ->mapWithKeys(fn($u) => [$u->id => "{$u->name} ({$u->active_tickets} aktif)"])
+                                )
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $records->each(function (Ticket $ticket) use ($data) {
+                                $ticket->update([
+                                    'assigned_to' => $data['assigned_to'],
+                                    'status' => $ticket->status === 'open' ? 'in_progress' : $ticket->status,
+                                ]);
+                            });
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()->hasAnyRole(['super_admin', 'Admin'])),
+
+                    Tables\Actions\BulkAction::make('bulk_change_status')
+                        ->label('Ubah Status')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('info')
+                        ->form([
+                            Forms\Components\Select::make('status')
+                                ->label('Status Baru')
+                                ->options([
+                                    'open'             => 'Dibuka',
+                                    'in_progress'      => 'Diproses',
+                                    'waiting_for_user' => 'Menunggu User',
+                                    'resolved'         => 'Selesai',
+                                    'closed'           => 'Ditutup',
+                                ])
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $records->each(function (Ticket $ticket) use ($data) {
+                                $updates = ['status' => $data['status']];
+                                if ($data['status'] === 'resolved' && !$ticket->resolved_at) {
+                                    $updates['resolved_at'] = now();
+                                }
+                                if ($data['status'] === 'closed' && !$ticket->closed_at) {
+                                    $updates['closed_at'] = now();
+                                }
+                                $ticket->update($updates);
+                            });
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()->hasAnyRole(['super_admin', 'Admin'])),
+
+                    Tables\Actions\BulkAction::make('bulk_close')
+                        ->label('Tutup Tiket')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('gray')
+                        ->requiresConfirmation()
+                        ->modalHeading('Tutup tiket terpilih?')
+                        ->modalDescription('Semua tiket yang dipilih akan ditutup.')
+                        ->action(function (Collection $records) {
+                            $records->each(fn (Ticket $ticket) => $ticket->close());
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn () => auth()->user()->hasAnyRole(['super_admin', 'Admin'])),
+
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
@@ -652,6 +824,7 @@ class TicketResource extends Resource implements HasShieldPermissions
     {
         return [
             // ResponsesRelationManager diganti dengan TicketChatWidget
+            RelationManagers\AuditLogRelationManager::class,
         ];
     }
 

@@ -103,7 +103,7 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-truck'),
                 NavigationGroup::make('Inventaris')
                     ->icon('heroicon-o-computer-desktop'),
-                NavigationGroup::make('Konten')
+                NavigationGroup::make('Knowledge Management')
                     ->icon('heroicon-o-document-text'),
                 NavigationGroup::make('Manajemen Pengguna')
                     ->icon('heroicon-o-users'),

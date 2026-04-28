@@ -31,7 +31,7 @@ class ArticleResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationGroup = 'Konten';
+    protected static ?string $navigationGroup = 'Knowledge Management';
 
     protected static ?string $modelLabel = 'Artikel';
 

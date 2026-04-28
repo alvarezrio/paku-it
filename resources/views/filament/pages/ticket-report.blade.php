@@ -38,6 +38,7 @@
         $priorityStats = $this->getPriorityStatistics();
         $topReporters = $this->getTopReporters();
         $topHandlers = $this->getTopHandlers();
+        $agentWorkload = $this->getAgentWorkload();
         $tickets = $this->getTickets();
     @endphp
 
@@ -65,10 +66,25 @@
     </div>
 
     {{-- Additional Stats --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <x-filament::section class="text-center">
             <div class="text-2xl font-bold text-info-600">{{ $stats['avg_resolution_time'] }} hari</div>
             <div class="text-sm text-gray-500">Rata-rata Waktu Penyelesaian</div>
+        </x-filament::section>
+
+        <x-filament::section class="text-center">
+            @if($stats['avg_first_response_time'] !== null)
+                @php
+                    $minutes = $stats['avg_first_response_time'];
+                    $firstResponseLabel = $minutes < 60
+                        ? $minutes . ' menit'
+                        : round($minutes / 60, 1) . ' jam';
+                @endphp
+                <div class="text-2xl font-bold text-warning-600">{{ $firstResponseLabel }}</div>
+            @else
+                <div class="text-2xl font-bold text-gray-400">-</div>
+            @endif
+            <div class="text-sm text-gray-500">Rata-rata First Response</div>
         </x-filament::section>
 
         <x-filament::section class="text-center">
@@ -165,6 +181,36 @@
             </div>
         </x-filament::section>
     </div>
+
+    {{-- Agent Workload --}}
+    <x-filament::section class="mb-6">
+        <x-slot name="heading">Beban Kerja Admin</x-slot>
+        @if($agentWorkload->isEmpty())
+            <p class="text-gray-500 text-sm">Tidak ada admin terdaftar.</p>
+        @else
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                @foreach($agentWorkload as $agent)
+                    @php
+                        $count = $agent->active_tickets;
+                        $badgeClass = match(true) {
+                            $count === 0    => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                            $count <= 3     => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+                            $count <= 6     => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
+                            default         => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+                        };
+                    @endphp
+                    <div class="flex flex-col items-center p-3 rounded-lg border dark:border-gray-700 text-center">
+                        <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 truncate w-full" title="{{ $agent->name }}">
+                            {{ $agent->name }}
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold {{ $badgeClass }}">
+                            {{ $count }} aktif
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </x-filament::section>
 
     {{-- Tickets Table --}}
     <x-filament::section>

@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Ticket;
+use App\Models\TicketAuditLog;
 use App\Models\User;
 use Filament\Notifications\Notification;
 use Filament\Notifications\Actions\Action;
@@ -34,12 +35,34 @@ class TicketObserver
     }
 
     /**
+     * Write an audit log entry for the ticket.
+     */
+    protected function writeAuditLog(Ticket $ticket, string $event, string $description, array $oldValues = [], array $newValues = []): void
+    {
+        TicketAuditLog::create([
+            'ticket_id'   => $ticket->id,
+            'user_id'     => auth()->id(),
+            'event'       => $event,
+            'description' => $description,
+            'old_values'  => count($oldValues) ? $oldValues : null,
+            'new_values'  => count($newValues) ? $newValues : null,
+        ]);
+    }
+
+    /**
      * Handle the Ticket "created" event.
      */
     public function created(Ticket $ticket): void
     {
         // Clear badge cache when new ticket is created
         $this->clearBadgeCache($ticket);
+
+        // Catat audit log
+        $this->writeAuditLog($ticket, 'created', "Tiket {$ticket->ticket_number} dibuat oleh pelapor.", [], [
+            'subject'  => $ticket->subject,
+            'category' => $ticket->category,
+            'priority' => $ticket->priority,
+        ]);
 
         // Notifikasi ke semua admin bahwa ada tiket baru
         $admins = User::role('super_admin')->where('id', '!=', $ticket->user_id)->get();
@@ -82,6 +105,15 @@ class TicketObserver
                 'resolved' => 'Selesai',
                 'closed' => 'Ditutup',
             ];
+
+            // Audit log untuk perubahan status
+            $this->writeAuditLog(
+                $ticket,
+                'status_changed',
+                "Status berubah dari \"{$statusLabels[$oldStatus]}\" menjadi \"{$statusLabels[$newStatus]}\".",
+                ['status' => $oldStatus],
+                ['status' => $newStatus]
+            );
 
             $statusColors = [
                 'open' => 'danger',
@@ -129,6 +161,18 @@ class TicketObserver
         // Cek apakah tiket di-assign ke seseorang
         if ($ticket->isDirty('assigned_to') && $ticket->assigned_to) {
             $newAssignedUser = User::find($ticket->assigned_to);
+
+            // Audit log untuk assignment
+            $oldAssigned = $ticket->getOriginal('assigned_to')
+                ? (User::find($ticket->getOriginal('assigned_to'))?->name ?? 'Tidak diketahui')
+                : 'Belum ditugaskan';
+            $this->writeAuditLog(
+                $ticket,
+                'assigned',
+                "Tiket ditugaskan ke {$newAssignedUser?->name}.",
+                ['assigned_to' => $oldAssigned],
+                ['assigned_to' => $newAssignedUser?->name]
+            );
 
             // Jangan kirim notifikasi jika self-assign
             if ($newAssignedUser && $ticket->assigned_to !== auth()->id()) {

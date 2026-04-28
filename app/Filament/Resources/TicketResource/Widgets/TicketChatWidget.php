@@ -17,6 +17,8 @@ class TicketChatWidget extends Widget
 
     public string $message = '';
 
+    public bool $isInternalNote = false;
+
     public function sendMessage(): void
     {
         $this->validate([
@@ -26,18 +28,26 @@ class TicketChatWidget extends Widget
             'message.min' => 'Pesan minimal 3 karakter',
         ]);
 
+        $isAdmin = auth()->user()->hasAnyRole(['super_admin', 'Admin']);
+
         $this->record->responses()->create([
             'user_id' => auth()->id(),
             'message' => nl2br(e($this->message)),
-            'is_internal_note' => false,
+            'is_internal_note' => $isAdmin && $this->isInternalNote,
         ]);
 
+        // Set first_responded_at jika admin merespons untuk pertama kali (bukan catatan internal)
+        if ($isAdmin && !$this->isInternalNote && !$this->record->first_responded_at) {
+            $this->record->update(['first_responded_at' => now()]);
+        }
+
         // Update status jika admin merespon dan tiket masih open
-        if (auth()->user()->hasRole('super_admin') && $this->record->status === 'open') {
+        if ($isAdmin && $this->record->status === 'open' && !$this->isInternalNote) {
             $this->record->update(['status' => 'in_progress']);
         }
 
         $this->message = '';
+        $this->isInternalNote = false;
 
         Notification::make()
             ->title('Pesan terkirim')
@@ -47,9 +57,11 @@ class TicketChatWidget extends Widget
 
     protected function getViewData(): array
     {
+        $isAdmin = auth()->user()->hasAnyRole(['super_admin', 'Admin']);
+
         $responses = $this->record->responses()
             ->with('user')
-            ->when(!auth()->user()->hasRole('super_admin'), function ($query) {
+            ->when(!$isAdmin, function ($query) {
                 $query->where('is_internal_note', false);
             })
             ->orderBy('created_at', 'asc')
@@ -58,6 +70,7 @@ class TicketChatWidget extends Widget
         return [
             'responses' => $responses,
             'ticket' => $this->record,
+            'isAdmin' => $isAdmin,
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Observers\TicketObserver;
+use App\Settings\SlaSettings;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,8 +16,10 @@ class Ticket extends Model
     protected $guarded = ['id'];
 
     protected $casts = [
-        'resolved_at' => 'datetime',
-        'closed_at' => 'datetime',
+        'resolved_at'        => 'datetime',
+        'closed_at'          => 'datetime',
+        'first_responded_at' => 'datetime',
+        'sla_due_at'         => 'datetime',
     ];
 
     protected static function booted(): void
@@ -25,6 +28,16 @@ class Ticket extends Model
             if (empty($ticket->ticket_number)) {
                 $ticket->ticket_number = self::generateTicketNumber();
             }
+
+            $sla = app(SlaSettings::class);
+            $ticket->sla_due_at = now()->addHours(
+                match($ticket->priority) {
+                    'critical' => $sla->critical_hours,
+                    'high'     => $sla->high_hours,
+                    'medium'   => $sla->medium_hours,
+                    default    => $sla->low_hours,
+                }
+            );
         });
     }
 
@@ -70,6 +83,11 @@ class Ticket extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(TicketAttachment::class);
+    }
+
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(TicketAuditLog::class)->orderByDesc('created_at');
     }
 
     // Accessors
@@ -133,6 +151,13 @@ class Ticket extends Model
             'closed' => 'Ditutup',
             default => $this->status,
         };
+    }
+
+    public function isSlaOverdue(): bool
+    {
+        return $this->sla_due_at !== null
+            && $this->sla_due_at->isPast()
+            && in_array($this->status, ['open', 'in_progress', 'waiting_for_user']);
     }
 
     // Helper methods

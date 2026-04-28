@@ -127,24 +127,33 @@ class TicketReport extends Page implements HasForms
         $resolved = (clone $query)->where('status', 'resolved')->count();
         $closed = (clone $query)->where('status', 'closed')->count();
 
-        // Average resolution time (in days)
-        $avgResolutionTime = Ticket::whereBetween('created_at', [
+        $dateRange = [
             Carbon::parse($this->startDate)->startOfDay(),
             Carbon::parse($this->endDate)->endOfDay(),
-        ])
+        ];
+
+        // Average resolution time (in days)
+        $avgResolutionTime = Ticket::whereBetween('created_at', $dateRange)
             ->whereNotNull('resolved_at')
             ->selectRaw('AVG(TIMESTAMPDIFF(DAY, created_at, resolved_at)) as avg_days')
             ->value('avg_days');
 
+        // Average first response time (in hours)
+        $avgFirstResponseTime = Ticket::whereBetween('created_at', $dateRange)
+            ->whereNotNull('first_responded_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_responded_at)) as avg_minutes')
+            ->value('avg_minutes');
+
         return [
-            'total' => $total,
-            'open' => $open,
-            'in_progress' => $inProgress,
-            'waiting_user' => $waitingUser,
-            'resolved' => $resolved,
-            'closed' => $closed,
-            'avg_resolution_time' => $avgResolutionTime ? round($avgResolutionTime) : 0,
-            'resolution_rate' => $total > 0 ? round((($resolved + $closed) / $total) * 100, 1) : 0,
+            'total'                    => $total,
+            'open'                     => $open,
+            'in_progress'              => $inProgress,
+            'waiting_user'             => $waitingUser,
+            'resolved'                 => $resolved,
+            'closed'                   => $closed,
+            'avg_resolution_time'      => $avgResolutionTime ? round($avgResolutionTime) : 0,
+            'avg_first_response_time'  => $avgFirstResponseTime ? round($avgFirstResponseTime) : null,
+            'resolution_rate'          => $total > 0 ? round((($resolved + $closed) / $total) * 100, 1) : 0,
         ];
     }
 
@@ -203,6 +212,16 @@ class TicketReport extends Page implements HasForms
             ->limit(5)
             ->get()
             ->toArray();
+    }
+
+    public function getAgentWorkload(): \Illuminate\Database\Eloquent\Collection
+    {
+        return User::role('Admin')
+            ->withCount(['assignedTickets as active_tickets' => fn($q) =>
+                $q->whereIn('status', ['open', 'in_progress', 'waiting_for_user'])
+            ])
+            ->orderByDesc('active_tickets')
+            ->get(['id', 'name']);
     }
 
     public function getTickets(): \Illuminate\Database\Eloquent\Collection

@@ -50,15 +50,24 @@ class TicketStatsWidget extends Widget
                 $baseQuery->where('user_id', $user->id);
             }
 
+            $avgFirstResponseMinutes = $isAdmin
+                ? Ticket::whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->whereNotNull('first_responded_at')
+                    ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_responded_at)) as avg_minutes')
+                    ->value('avg_minutes')
+                : null;
+
             return [
-                'newTickets' => (clone $baseQuery)->where('status', 'open')->count(),
-                'inProgressTickets' => (clone $baseQuery)->where('status', 'in_progress')->count(),
-                'waitingUserTickets' => (clone $baseQuery)->where('status', 'waiting_for_user')->count(),
-                'unassignedTickets' => (clone $baseQuery)->whereIn('status', ['open', 'in_progress'])->whereNull('assigned_to')->count(),
-                'highPriorityOpen' => (clone $baseQuery)->whereIn('status', ['open', 'in_progress', 'waiting_for_user'])->whereIn('priority', ['high', 'critical'])->count(),
-                'resolvedThisMonth' => (clone $baseQuery)->whereIn('status', ['resolved', 'closed'])->whereMonth('resolved_at', now()->month)->whereYear('resolved_at', now()->year)->count(),
-                'todayTickets' => (clone $baseQuery)->whereDate('created_at', today())->count(),
-                'monthlyTickets' => (clone $baseQuery)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+                'newTickets'             => (clone $baseQuery)->where('status', 'open')->count(),
+                'inProgressTickets'      => (clone $baseQuery)->where('status', 'in_progress')->count(),
+                'waitingUserTickets'     => (clone $baseQuery)->where('status', 'waiting_for_user')->count(),
+                'unassignedTickets'      => (clone $baseQuery)->whereIn('status', ['open', 'in_progress'])->whereNull('assigned_to')->count(),
+                'highPriorityOpen'       => (clone $baseQuery)->whereIn('status', ['open', 'in_progress', 'waiting_for_user'])->whereIn('priority', ['high', 'critical'])->count(),
+                'resolvedThisMonth'      => (clone $baseQuery)->whereIn('status', ['resolved', 'closed'])->whereMonth('resolved_at', now()->month)->whereYear('resolved_at', now()->year)->count(),
+                'todayTickets'           => (clone $baseQuery)->whereDate('created_at', today())->count(),
+                'monthlyTickets'         => (clone $baseQuery)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+                'avgFirstResponseMinutes' => $avgFirstResponseMinutes ? round($avgFirstResponseMinutes) : null,
             ];
         });
 
@@ -98,6 +107,18 @@ class TicketStatsWidget extends Widget
                 ->descriptionIcon('heroicon-m-check-badge')
                 ->color('success')
                 ->chart([4, 6, 5, 7, 8, $stats['resolvedThisMonth']]),
+
+            ...(($isAdmin && $stats['avgFirstResponseMinutes'] !== null) ? [
+                Stat::make(
+                    'Avg. First Response',
+                    $stats['avgFirstResponseMinutes'] < 60
+                        ? $stats['avgFirstResponseMinutes'] . ' mnt'
+                        : round($stats['avgFirstResponseMinutes'] / 60, 1) . ' jam'
+                )
+                    ->description('Rata-rata respons pertama bulan ini')
+                    ->descriptionIcon('heroicon-m-bolt')
+                    ->color($stats['avgFirstResponseMinutes'] <= 60 ? 'success' : ($stats['avgFirstResponseMinutes'] <= 240 ? 'warning' : 'danger')),
+            ] : []),
         ];
     }
 }
