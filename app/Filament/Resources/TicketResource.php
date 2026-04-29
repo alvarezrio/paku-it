@@ -594,7 +594,23 @@ class TicketResource extends Resource implements HasShieldPermissions
                     ->color('gray')
                     ->requiresConfirmation()
                     ->action(fn (Ticket $record) => $record->close())
-                    ->visible(fn (Ticket $record) => $record->status === 'resolved'),
+                    ->visible(fn (Ticket $record) => $record->status === 'resolved' && auth()->user()->hasAnyRole(['super_admin', 'Admin'])),
+
+                Tables\Actions\Action::make('reopen')
+                    ->label('Buka Kembali')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Buka Kembali Tiket?')
+                    ->modalDescription('Tiket akan dikembalikan ke antrian dan dapat ditangani kembali.')
+                    ->modalSubmitActionLabel('Ya, Buka Kembali')
+                    ->action(fn (Ticket $record) => $record->reopen())
+                    ->visible(fn (Ticket $record) => $record->status === 'closed'
+                        && (
+                            auth()->user()->hasAnyRole(['super_admin', 'Admin'])
+                            || $record->user_id === auth()->id()  // pelapor bisa reopen tiket sendiri
+                        )
+                    ),
 
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make()

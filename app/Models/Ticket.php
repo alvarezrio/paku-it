@@ -187,4 +187,15 @@ class Ticket extends Model
             'closed_at' => now(),
         ]);
     }
+
+    public function reopen(): void
+    {
+        $this->update([
+            // Jika masih ada penanggung jawab, langsung masuk in_progress
+            // Jika tidak ada, kembali ke open agar bisa di-assign ulang
+            'status'      => $this->assigned_to ? 'in_progress' : 'open',
+            'resolved_at' => null,
+            'closed_at'   => null,
+        ]);
+    }
 }
