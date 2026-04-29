@@ -38,6 +38,9 @@ class ManageSetting extends SettingsPage
                         ->label('Reset Password Diaktifkan'),
                     Toggle::make('sso_enabled')
                         ->label('SSO Diaktifkan'),
+                    Toggle::make('email_verification_required')
+                        ->label('Verifikasi Email Wajib')
+                        ->helperText('Jika dinonaktifkan, user yang belum memverifikasi email tetap dapat login ke sistem. Direkomendasikan nonaktif untuk user yang dibuat langsung oleh admin.'),
                 ]),
             ]);
     }

@@ -70,6 +70,19 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, MustVerif
         return $this->avatar_url ? Storage::url($this->avatar_url) : null;
     }
 
+    /**
+     * Override: user tanpa email dianggap sudah terverifikasi
+     * (tidak ada email yang perlu diverifikasi).
+     */
+    public function hasVerifiedEmail(): bool
+    {
+        if (is_null($this->email)) {
+            return true;
+        }
+
+        return !is_null($this->email_verified_at);
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         return true;

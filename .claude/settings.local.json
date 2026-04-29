@@ -40,7 +40,8 @@
       "Bash(npm:*)",
       "Bash(C:/laragon/bin/php/php-8.3.14-Win32-vs16-x64/php.exe --version)",
       "Bash(dir:*)",
-      "Bash(Get-Content \"A:\\\\proyek_magang\\\\edh-421\\\\storage\\\\logs\\\\laravel.log\" -Tail 80)"
+      "Bash(Get-Content \"A:\\\\proyek_magang\\\\edh-421\\\\storage\\\\logs\\\\laravel.log\" -Tail 80)",
+      "Bash(echo:*)"
     ]
   }
 }
