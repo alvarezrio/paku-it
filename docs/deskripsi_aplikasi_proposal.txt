@@ -1,0 +1,481 @@
+==============================================================================
+  DOKUMENTASI APLIKASI UNTUK PROPOSAL TUGAS AKHIR
+  KlinikTI - Aplikasi Layanan Helpdesk & Manajemen Perangkat IT
+==============================================================================
+
+Disusun sebagai bahan referensi penulisan Proposal Laporan Tugas Akhir.
+Dokumen ini menjelaskan sistem secara teknis dan fungsional.
+
+------------------------------------------------------------------------------
+A. NAMA DAN GAMBARAN UMUM APLIKASI
+------------------------------------------------------------------------------
+
+Nama Aplikasi : Employee Digital Hub (EDH)
+Jenis Sistem  : Sistem Informasi Internal Berbasis Web (Intranet)
+Sasaran Pengguna : Pegawai KPP Pratama (±120 pegawai)
+Akses         : Jaringan Intranet Kantor (Localhost / LAN)
+
+Deskripsi Singkat:
+  Employee Digital Hub adalah sistem informasi terintegrasi yang dibangun
+  untuk mendukung operasional internal kantor, khususnya dalam pengelolaan
+  aset teknologi informasi dan pelayanan bantuan teknis (IT Helpdesk).
+  Sistem ini menggantikan proses manual (tatap muka / WhatsApp / kertas)
+  yang sebelumnya digunakan untuk pelaporan kerusakan perangkat dan
+  pencatatan aset IT.
+
+Fokus Utama yang Dibahas dalam Proposal:
+  1. Modul IT Helpdesk (Ticketing System)
+  2. Modul Manajemen Perangkat IT (Device/Asset Management)
+
+------------------------------------------------------------------------------
+B. LATAR BELAKANG PENGEMBANGAN
+------------------------------------------------------------------------------
+
+Permasalahan yang melatarbelakangi pembangunan sistem ini antara lain:
+
+  1. Pelaporan Kerusakan Tidak Terstruktur
+     Sebelumnya, pegawai melaporkan kerusakan perangkat melalui percakapan
+     informal (WA/lisan), sehingga tidak ada dokumentasi, tidak dapat
+     dipantau progresnya, dan sering terlambat ditangani.
+
+  2. Data Aset IT Tidak Terpusat
+     Inventaris perangkat IT (laptop, PC, printer) dicatat secara terpisah
+     di spreadsheet yang tidak selalu diperbarui. Akibatnya sulit mengetahui
+     kondisi, lokasi, dan penanggungjawab setiap aset secara real-time.
+
+  3. Tidak Ada Rekam Jejak Penanganan
+     Tidak tersedia riwayat penanganan teknis atas setiap perangkat,
+     sehingga sulit menganalisis pola kerusakan atau kebutuhan penggantian.
+
+  4. Akuntabilitas Rendah
+     Tidak ada sistem penugasan formal antara tim IT dan pegawai pelapor,
+     sehingga sulit mengukur responsivitas dan kinerja layanan IT.
+
+Solusi yang Ditawarkan:
+  Membangun sistem helpdesk berbasis tiket yang terintegrasi dengan data
+  inventaris perangkat IT, sehingga setiap laporan kerusakan memiliki
+  nomor tiket unik, dapat dilacak statusnya, dan terhubung dengan data
+  aset terkait.
+
+------------------------------------------------------------------------------
+C. RUANG LINGKUP SISTEM
+------------------------------------------------------------------------------
+
+Sistem mencakup dua modul utama yang saling terintegrasi:
+
+  MODUL 1: Manajemen Perangkat IT
+  ================================
+  - Pendataan seluruh perangkat IT kantor (PC, Laptop, Printer, dll.)
+  - Penugasan perangkat ke pegawai (satu perangkat per pegawai)
+  - Pencatatan spesifikasi teknis lengkap setiap perangkat
+  - Pelacakan kondisi dan status operasional perangkat
+  - Riwayat tiket yang terkait dengan perangkat tertentu
+  - Atribut dinamis (dapat dikonfigurasi) untuk kebutuhan pencatatan khusus
+  - Ekspor data inventaris ke format Excel
+
+  MODUL 2: IT Helpdesk (Ticketing System)
+  =========================================
+  - Pelaporan kerusakan / permintaan layanan IT oleh pegawai
+  - Pembuatan tiket otomatis dengan nomor unik (format: TKT-YYYYMMDD-XXXX)
+  - Kategorisasi laporan berdasarkan jenis layanan
+  - Penentuan prioritas tiket (Low, Medium, High, Critical)
+  - Penugasan tiket ke teknisi IT
+  - Komunikasi dua arah antara pelapor dan teknisi via sistem chat tiket
+  - Lampiran foto/file bukti kerusakan
+  - Pengelolaan SLA (Service Level Agreement)
+  - Audit log seluruh perubahan status tiket
+  - Laporan dan analitik tiket (ekspor Excel & PDF)
+
+  MODUL PENDUKUNG:
+  - Manajemen Pengguna berbasis RBAC (Role-Based Access Control)
+  - Knowledge Base / Artikel tips IT untuk pegawai
+  - Autentikasi multi-metode (username/password, Google OAuth, 2FA)
+
+------------------------------------------------------------------------------
+D. PENGGUNA SISTEM DAN HAK AKSES (RBAC)
+------------------------------------------------------------------------------
+
+Sistem mengimplementasikan Role-Based Access Control menggunakan
+library Spatie Laravel Permission dengan struktur role sebagai berikut:
+
+  1. SUPER ADMIN / ADMIN IT
+     Hak akses penuh ke seluruh sistem:
+     - Mengelola data pengguna (tambah, edit, hapus, atur role)
+     - Mengelola seluruh data perangkat IT (CRUD)
+     - Menerima, memproses, dan menutup tiket helpdesk
+     - Menugaskan tiket ke teknisi lain
+     - Menambahkan catatan internal (internal note) pada tiket
+     - Mengakses laporan dan statistik
+     - Mengelola artikel knowledge base
+     - Mengelola konfigurasi sistem (SLA, atribut perangkat, dll.)
+
+  2. PEGAWAI (USER)
+     - Melihat perangkat IT yang ditugaskan kepadanya
+     - Membuat tiket helpdesk (laporan kerusakan / permintaan layanan)
+     - Memantau status tiket yang pernah dilaporkan
+     - Berkomunikasi dengan teknisi melalui chat tiket
+     - Melampirkan foto/file pada tiket
+     - Membaca artikel knowledge base
+
+  3. PIMPINAN (VIEW-ONLY)
+     - Mengakses dashboard statistik dan laporan
+     - Memantau kinerja layanan IT secara keseluruhan
+     - Tidak dapat membuat atau mengedit data operasional
+
+------------------------------------------------------------------------------
+E. SPESIFIKASI TEKNIS
+------------------------------------------------------------------------------
+
+  Stack Teknologi:
+  ----------------
+  Backend Framework  : Laravel 11 (PHP 8.2+)
+  Admin Panel        : Filament 3.x (TALL Stack - Tailwind, Alpine, Livewire)
+  Frontend Styling   : Tailwind CSS 3.4 + DaisyUI
+  Database           : MySQL 8.0 / MariaDB
+  Real-time          : Laravel Livewire (polling-based)
+  Authentication     : Filament Breezy (2FA), Laravel Socialite (Google OAuth)
+  Authorization      : Spatie Laravel Permission
+  API Token          : Laravel Sanctum
+  File Build         : Vite
+  Queue/Jobs         : Laravel Queue (database driver)
+  Ekspor Data        : Maatwebsite Excel, DomPDF
+
+  Server Requirement:
+  -------------------
+  PHP        : >= 8.2
+  Web Server : Apache / Nginx (Laragon untuk development)
+  Database   : MySQL 8.0 atau MariaDB 10.6+
+  Node.js    : >= 18.x (untuk build asset Vite)
+
+------------------------------------------------------------------------------
+F. ARSITEKTUR SISTEM
+------------------------------------------------------------------------------
+
+  Pola Arsitektur: MVC (Model-View-Controller) berbasis Laravel
+
+  Komponen Utama:
+  ---------------
+  1. Models (app/Models/)
+     Merepresentasikan entitas data dan logika bisnis.
+     Contoh: Device.php, Ticket.php, User.php
+
+  2. Filament Resources (app/Filament/Resources/)
+     Menangani tampilan CRUD admin panel secara deklaratif.
+     Setiap resource memiliki Form, Table, dan Pages tersendiri.
+
+  3. Controllers (app/Http/Controllers/)
+     Menangani rute non-Filament: halaman publik, unduh lampiran,
+     ekspor laporan.
+
+  4. Livewire Components (app/Livewire/)
+     Komponen reaktif untuk fitur real-time seperti chat tiket.
+
+  5. Observers (app/Observers/)
+     Menangkap event model untuk otomasi:
+     - TicketObserver: mencatat audit log setiap perubahan tiket
+     - VehicleBookingObserver: mengotomasi perubahan status peminjaman
+
+  6. Settings (app/Settings/)
+     Konfigurasi sistem yang dapat diubah melalui panel admin:
+     - SlaSettings: waktu SLA per prioritas tiket
+     - ModuleSettings: konfigurasi modul aktif
+
+  7. Policies (app/Policies/)
+     Aturan otorisasi spesifik per model untuk kontrol akses granular.
+
+  Pola Alur Data:
+  ---------------
+  Pegawai (Browser) --> Filament Panel --> Livewire/Controller
+    --> Model (Eloquent ORM) --> Database (MySQL)
+    --> Response (Blade View / JSON)
+
+------------------------------------------------------------------------------
+G. STRUKTUR DATABASE
+------------------------------------------------------------------------------
+
+  Tabel-tabel utama dalam sistem:
+
+  1. users
+     Menyimpan data seluruh pegawai sebagai akun sistem.
+     Kolom: id, name, nip (unik, 9 digit), email, phone_number, password,
+             avatar_url, theme, theme_color, timestamps
+
+  2. devices
+     Master data perangkat IT kantor.
+     Kolom: id, user_id (FK, nullable - penanggungjawab),
+             type (laptop|desktop|all-in-one|workstation),
+             hostname, ip_address, mac_address, os, os_version,
+             processor, ram, storage_type, storage_capacity,
+             brand, model, serial_number (unik), purchase_date,
+             warranty_expiry, condition (excellent|good|fair|poor|broken),
+             status (active|inactive|maintenance|retired),
+             notes, location, asset_tag (unik), timestamps
+     Catatan: Kolom printer_brand, printer_model tersedia untuk tipe printer.
+              Kolom responsible_section untuk perangkat tanpa penanggungjawab.
+
+  3. device_attributes
+     Atribut dinamis yang dapat dikonfigurasi admin untuk perangkat.
+     Kolom: id, name, slug (unik), type (text|select|textarea),
+             options (JSON), is_required, is_active, sort_order, timestamps
+
+  4. device_attribute_values
+     Nilai atribut dinamis per perangkat.
+     Kolom: id, device_id (FK), device_attribute_id (FK), value, timestamps
+
+  5. tickets
+     Data tiket helpdesk.
+     Kolom: id, ticket_number (unik, format TKT-YYYYMMDD-XXXX),
+             user_id (FK - pelapor), device_id (FK, nullable - perangkat terkait),
+             assigned_to (FK nullable - teknisi yang ditugaskan),
+             category (incident_management|service_request|user_support|
+                       access_management|asset_management|change_management|
+                       network_support|security_support|documentation_kb),
+             priority (low|medium|high|critical),
+             subject, description (text),
+             status (open|in_progress|waiting_for_user|resolved|closed),
+             resolution_notes, resolved_at, closed_at,
+             first_responded_at, sla_due_at,
+             is_external_device (boolean), timestamps
+
+  6. ticket_responses
+     Pesan/balasan dalam tiket (chat antara pegawai dan teknisi).
+     Kolom: id, ticket_id (FK), user_id (FK), message (text),
+             is_internal_note (boolean - catatan internal admin), timestamps
+
+  7. ticket_attachments
+     Lampiran file/foto pada tiket, disimpan dalam database (base64).
+     Kolom: id, ticket_id (FK), file_name, file_type, file_size,
+             file_data (longText/base64), timestamps
+
+  8. ticket_audit_logs
+     Rekam jejak seluruh perubahan tiket secara otomatis.
+     Kolom: id, ticket_id (FK), user_id (FK), action, field_name,
+             old_values (JSON), new_values (JSON), timestamps
+
+  9. roles (Spatie Permission)
+     Master role pengguna: super_admin, admin, user, dll.
+
+  10. model_has_roles (Spatie Permission)
+      Relasi pengguna dengan role yang dimiliki.
+
+  Relasi Antar Tabel (ringkasan):
+  - users (1) --> (N) devices          [satu pegawai dapat memiliki satu perangkat]
+  - users (1) --> (N) tickets          [satu pegawai dapat membuat banyak tiket]
+  - devices (1) --> (N) tickets        [satu perangkat dapat memiliki banyak tiket]
+  - tickets (1) --> (N) ticket_responses  [satu tiket dapat memiliki banyak balasan]
+  - tickets (1) --> (N) ticket_attachments
+  - tickets (1) --> (N) ticket_audit_logs
+  - devices (1) --> (N) device_attribute_values
+  - device_attributes (1) --> (N) device_attribute_values
+
+------------------------------------------------------------------------------
+H. ALUR KERJA (WORKFLOW)
+------------------------------------------------------------------------------
+
+  ALUR TIKET HELPDESK:
+  --------------------
+  1. Pegawai login ke sistem
+  2. Pegawai membuka menu "Buat Tiket"
+  3. Sistem menampilkan pilihan kategori layanan
+  4. Pegawai mengisi:
+     - Kategori: Incident / Service Request / dll.
+     - Prioritas: Low / Medium / High / Critical
+     - Perangkat terkait (diambil dari data aset yang ditugaskan)
+        atau tandai sebagai perangkat eksternal
+     - Judul dan deskripsi masalah
+     - Lampiran foto/file (opsional)
+  5. Sistem membuat nomor tiket otomatis (TKT-YYYYMMDD-XXXX)
+  6. Sistem menghitung SLA due date berdasarkan prioritas
+  7. Status tiket: OPEN
+  8. Admin IT menerima notifikasi tiket baru
+  9. Admin IT menugaskan tiket ke teknisi (assigned_to)
+  10. Status tiket berubah: IN PROGRESS
+  11. Teknisi memperbarui status dan berkomunikasi via chat tiket
+  12. Jika menunggu respons pegawai: WAITING FOR USER
+  13. Setelah masalah selesai: teknisi mengisi resolution notes
+  14. Status: RESOLVED --> CLOSED (setelah konfirmasi)
+  15. Seluruh perubahan status tercatat otomatis di audit log
+
+  Status Tiket yang Tersedia:
+  - OPEN             : Tiket baru masuk, belum ditangani
+  - IN PROGRESS      : Sedang dalam proses penanganan oleh teknisi
+  - WAITING FOR USER : Menunggu respons/tindakan dari pelapor
+  - RESOLVED         : Masalah telah diselesaikan
+  - CLOSED           : Tiket ditutup secara resmi
+
+  ALUR PENGELOLAAN PERANGKAT IT:
+  --------------------------------
+  1. Admin IT menginput data perangkat baru ke sistem
+  2. Mengisi data: tipe, hostname, spesifikasi, nomor seri, asset tag, dll.
+  3. Menugaskan perangkat ke pegawai yang bertanggungjawab
+  4. Perangkat terhubung otomatis ke profil pegawai tersebut
+  5. Saat pegawai membuat tiket, perangkat miliknya muncul sebagai pilihan
+  6. Admin dapat memperbarui kondisi dan status perangkat
+  7. Riwayat tiket terkait perangkat tersimpan dan dapat dilihat
+  8. Data inventaris dapat diekspor ke Excel
+
+------------------------------------------------------------------------------
+I. FITUR-FITUR SISTEM (DETAIL)
+------------------------------------------------------------------------------
+
+  MODUL MANAJEMEN PERANGKAT IT:
+  ==============================
+  [F-D01] Input data perangkat baru dengan form tervalidasi
+  [F-D02] Dukungan tipe perangkat: Laptop, Desktop, All-in-One,
+          Workstation (dengan field printer untuk tipe khusus)
+  [F-D03] Penugasan perangkat ke pegawai (relasi 1:1)
+  [F-D04] Pelacakan kondisi: Excellent / Good / Fair / Poor / Broken
+  [F-D05] Pelacakan status: Active / Inactive / Maintenance / Retired
+  [F-D06] Pencatatan detail: hostname, IP, MAC address, OS, spesifikasi HW
+  [F-D07] Pencatatan masa garansi dan notifikasi hampir kadaluarsa
+  [F-D08] Atribut dinamis yang dapat dikonfigurasi oleh admin
+          (misal: lisensi software, kode inventaris kementerian)
+  [F-D09] Pencarian dan filter data perangkat (berdasarkan tipe, kondisi,
+          status, penanggungjawab, lokasi)
+  [F-D10] Ekspor data inventaris ke file Excel
+  [F-D11] Tampilan riwayat tiket yang pernah terkait dengan perangkat
+
+  MODUL IT HELPDESK:
+  ===================
+  [F-T01] Pembuatan tiket dengan 9 kategori layanan:
+          - Incident Management (kerusakan/gangguan sistem)
+          - Service Request (permintaan layanan baru)
+          - User Support (bantuan penggunaan)
+          - Access Management (hak akses sistem)
+          - Asset Management (masalah aset)
+          - Change Management (perubahan konfigurasi)
+          - Network Support (jaringan)
+          - Security Support (keamanan)
+          - Documentation/KB (dokumentasi)
+  [F-T02] 4 level prioritas: Low, Medium, High, Critical
+  [F-T03] Nomor tiket otomatis (TKT-YYYYMMDD-XXXX)
+  [F-T04] Integrasi dengan data perangkat pegawai
+  [F-T05] Upload lampiran foto/file bukti kerusakan
+  [F-T06] Chat antara pelapor dan teknisi dalam tiket
+  [F-T07] Internal note (catatan admin yang tidak terlihat pelapor)
+  [F-T08] SLA tracking dengan alert jika melewati batas waktu
+  [F-T09] Audit log otomatis setiap perubahan pada tiket
+  [F-T10] Penugasan tiket ke teknisi spesifik
+  [F-T11] Pencatatan resolusi (resolution notes)
+  [F-T12] Filter dan pencarian tiket (berdasarkan status, prioritas,
+          kategori, teknisi, tanggal)
+  [F-T13] Laporan tiket: grafik statistik, rekapitulasi
+  [F-T14] Ekspor laporan tiket ke Excel dan PDF
+  [F-T15] Dashboard statistik (total tiket, distribusi status/prioritas)
+
+  MODUL AUTENTIKASI & KEAMANAN:
+  ==============================
+  [F-A01] Login menggunakan NIP/Email + Password
+  [F-A02] Login via Google OAuth (Single Sign-On)
+  [F-A03] Two-Factor Authentication (2FA) opsional
+  [F-A04] Role-Based Access Control (RBAC) granular per halaman/aksi
+  [F-A05] API Token berbasis Sanctum untuk integrasi eksternal
+  [F-A06] CSRF protection bawaan Laravel
+  [F-A07] Password hashing menggunakan bcrypt
+
+  MODUL KNOWLEDGE BASE:
+  ======================
+  [F-K01] Artikel tips dan trik IT dari admin
+  [F-K02] Kategorisasi artikel
+  [F-K03] Pencatatan jumlah pembaca per artikel
+  [F-K04] Halaman publik untuk membaca artikel (tanpa login)
+
+------------------------------------------------------------------------------
+J. LAPORAN DAN ANALITIK
+------------------------------------------------------------------------------
+
+  Sistem menyediakan fitur pelaporan untuk mendukung pengambilan keputusan:
+
+  1. Dashboard Statistik Perangkat:
+     - Total perangkat per tipe
+     - Distribusi kondisi perangkat
+     - Distribusi status operasional
+     - Perangkat yang sedang dalam perbaikan
+
+  2. Dashboard Statistik Tiket:
+     - Total tiket berdasarkan periode
+     - Distribusi status tiket (open, in progress, resolved, closed)
+     - Distribusi prioritas tiket
+     - Distribusi kategori layanan
+     - Rata-rata waktu penyelesaian tiket
+     - Tiket yang melebihi SLA
+
+  3. Ekspor Laporan:
+     - Ekspor data tiket ke Excel (dengan filter tanggal, status, dll.)
+     - Ekspor laporan tiket ke PDF (format ringkasan manajemen)
+     - Ekspor data inventaris perangkat ke Excel
+
+------------------------------------------------------------------------------
+K. INTEGRASI ANTAR MODUL
+------------------------------------------------------------------------------
+
+  Hubungan fungsional antar modul yang penting untuk dijelaskan:
+
+  1. Integrasi Helpdesk <--> Manajemen Perangkat:
+     - Saat membuat tiket, pegawai dapat memilih perangkat yang ditugaskan
+       kepadanya secara langsung dari data inventaris
+     - Data perangkat (tipe, hostname, kondisi) otomatis terlampir pada tiket
+     - Riwayat tiket suatu perangkat tersimpan dan dapat dilihat di detail
+       perangkat (untuk analisis pola kerusakan)
+
+  2. Integrasi Helpdesk <--> Manajemen Pengguna:
+     - Penugasan tiket ke teknisi berdasarkan data user dengan role admin
+     - Profil penanggungjawab tiket otomatis tampil berdasarkan data user
+
+  3. Integrasi Manajemen Perangkat <--> Manajemen Pengguna:
+     - Perangkat dapat ditugaskan ke pegawai (relasi user_id pada tabel devices)
+     - Profil pegawai secara otomatis menampilkan perangkat yang ditugaskan
+
+------------------------------------------------------------------------------
+L. KEUNGGULAN SISTEM
+------------------------------------------------------------------------------
+
+  1. Terintegrasi: Data aset dan tiket saling terhubung, mengurangi duplikasi
+  2. Auditabel: Setiap perubahan tiket tercatat di audit log secara otomatis
+  3. Nomor Tiket Otomatis: Format TKT-YYYYMMDD-XXXX memudahkan pelacakan
+  4. SLA Tracking: Sistem mengingatkan tiket yang hampir atau sudah melewati
+     batas waktu penanganan
+  5. Multi-Auth: Mendukung login biasa, Google SSO, dan 2FA
+  6. Ekspor Data: Laporan dapat diekspor ke Excel dan PDF
+  7. Atribut Dinamis: Admin dapat menambah field kustom perangkat tanpa
+     perubahan kode (no-code customization)
+  8. Responsif: Tampilan menyesuaikan layar desktop dan mobile
+
+------------------------------------------------------------------------------
+M. KETERBATASAN SISTEM (BATASAN PENELITIAN)
+------------------------------------------------------------------------------
+
+  1. Sistem berjalan pada jaringan intranet kantor, tidak dapat diakses
+     dari luar jaringan tanpa VPN
+  2. Tidak ada integrasi dengan sistem kepegawaian eksternal (SIMPEG);
+     data pegawai diinput manual
+  3. Notifikasi tiket bersifat in-app (browser); belum ada notifikasi
+     email/SMS real-time
+  4. Lampiran tiket disimpan dalam database (base64), bukan file system
+     terpisah, sehingga tidak direkomendasikan untuk file berukuran besar
+  5. Sistem belum memiliki fitur mobile app native (hanya web responsif)
+
+------------------------------------------------------------------------------
+N. GLOSARIUM ISTILAH
+------------------------------------------------------------------------------
+
+  Tiket (Ticket)     : Unit pencatatan laporan kerusakan atau permintaan
+                       layanan IT, dengan nomor unik dan alur status
+  SLA                : Service Level Agreement - batas waktu penanganan
+                       tiket berdasarkan tingkat prioritas
+  RBAC               : Role-Based Access Control - sistem hak akses
+                       berdasarkan peran pengguna
+  Asset Tag          : Kode unik identifikasi fisik perangkat (label)
+  Audit Log          : Rekam jejak perubahan data secara otomatis
+  Internal Note      : Catatan pada tiket yang hanya terlihat oleh admin,
+                       tidak ditampilkan ke pelapor
+  Resolution Notes   : Catatan penyelesaian masalah yang ditulis teknisi
+  Filament           : Framework admin panel berbasis TALL Stack untuk Laravel
+  Spatie Permission  : Library PHP untuk implementasi RBAC di Laravel
+  2FA                : Two-Factor Authentication - verifikasi dua langkah
+  OAuth              : Protokol autentikasi via akun pihak ketiga (Google)
+
+==============================================================================
+  Dokumen ini dibuat untuk keperluan penulisan Proposal Tugas Akhir.
+  Konten teknis berdasarkan implementasi aktual pada codebase EDH-421.
+==============================================================================

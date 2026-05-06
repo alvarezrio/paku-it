@@ -135,6 +135,7 @@ class RecentTicketsWidget extends BaseWidget
             ->emptyStateHeading('Tidak ada tiket terbuka')
             ->emptyStateDescription('Semua tiket sudah ditangani.')
             ->emptyStateIcon('heroicon-o-check-circle')
-            ->paginated(false);
+            ->paginated(false)
+            ->deferLoading();
     }
 }

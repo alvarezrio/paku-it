@@ -189,7 +189,8 @@ class TicketResource extends Resource implements HasShieldPermissions
                             ->required()
                             ->default('incident_management')
                             ->disabled(fn ($record) => $record !== null && !auth()->user()->hasAnyRole(['super_admin', 'Admin']))
-                            ->dehydrated(true),
+                            ->dehydrated(true)
+                            ->live(),
 
                         Forms\Components\Select::make('priority')
                             ->label('Prioritas')
@@ -255,31 +256,95 @@ class TicketResource extends Resource implements HasShieldPermissions
                         Forms\Components\Placeholder::make('kb_suggestions')
                             ->label('')
                             ->content(function (Forms\Get $get) {
-                                $subject = trim($get('subject') ?? '');
-                                if (strlen($subject) < 4) {
-                                    return new HtmlString('<p class="text-sm text-gray-400 italic">Ketik minimal 4 karakter pada subjek untuk melihat artikel terkait...</p>');
+                                $subject        = trim($get('subject') ?? '');
+                                $ticketCategory = $get('category') ?? '';
+
+                                if (strlen($subject) < 3) {
+                                    return new HtmlString('<p class="text-sm text-gray-400 italic">Ketik minimal 3 karakter pada subjek untuk melihat artikel terkait...</p>');
                                 }
 
-                                $articles = Article::published()
-                                    ->where(fn($q) => $q
-                                        ->where('title', 'like', "%{$subject}%")
-                                        ->orWhere('content', 'like', "%{$subject}%")
-                                    )
-                                    ->limit(4)
-                                    ->get(['id', 'title', 'slug']);
+                                // Stop words BI + EN yang tidak informatif
+                                $stopWords = [
+                                    'dan','atau','yang','di','ke','dari','untuk','dengan','pada',
+                                    'tidak','ada','ini','itu','sudah','bisa','saya','kami','aku',
+                                    'the','and','or','is','in','to','for','of','a','an','not',
+                                ];
 
-                                if ($articles->isEmpty()) {
+                                // 1. Pecah subject jadi keyword bermakna (min 3 karakter)
+                                $subjectKeywords = collect(preg_split('/[\s\-_,\.;:]+/', strtolower($subject)))
+                                    ->filter(fn($w) => strlen($w) >= 3 && !in_array($w, $stopWords))
+                                    ->unique()
+                                    ->values();
+
+                                // 2. Tambahkan keyword kontekstual dari kategori tiket
+                                $categoryKeywords = collect(match ($ticketCategory) {
+                                    'incident_management' => ['insiden', 'error', 'rusak', 'gagal', 'gangguan', 'tidak berfungsi'],
+                                    'network_support'     => ['jaringan', 'wifi', 'internet', 'koneksi', 'network', 'lan', 'ip'],
+                                    'asset_management'    => ['aset', 'perangkat', 'hardware', 'device', 'inventaris', 'laptop', 'komputer'],
+                                    'user_support'        => ['akun', 'login', 'password', 'pengguna', 'reset', 'user'],
+                                    'access_management'   => ['akses', 'permission', 'login', 'password', 'hak akses', 'izin'],
+                                    'security_support'    => ['keamanan', 'virus', 'malware', 'security', 'enkripsi', 'backup'],
+                                    'service_request'     => ['instalasi', 'install', 'permintaan', 'request', 'setup', 'konfigurasi'],
+                                    'change_management'   => ['update', 'upgrade', 'migrasi', 'perubahan', 'konfigurasi', 'setting'],
+                                    'documentation_kb'    => ['panduan', 'manual', 'tutorial', 'dokumentasi', 'cara', 'langkah'],
+                                    default               => [],
+                                });
+
+                                $allKeywords = $subjectKeywords->merge($categoryKeywords)->unique()->filter();
+
+                                if ($allKeywords->isEmpty()) {
+                                    return new HtmlString('<p class="text-sm text-gray-400 italic">Tidak ada kata kunci yang dapat dianalisis.</p>');
+                                }
+
+                                // 3. Query: ambil kandidat artikel yang match keyword apapun (pool maks 20)
+                                $pool = Article::published()
+                                    ->where(function ($q) use ($allKeywords) {
+                                        foreach ($allKeywords as $kw) {
+                                            $q->orWhere('title', 'like', "%{$kw}%")
+                                              ->orWhere('content', 'like', "%{$kw}%");
+                                        }
+                                    })
+                                    ->limit(20)
+                                    ->get(['id', 'title', 'slug', 'content']);
+
+                                if ($pool->isEmpty()) {
                                     return new HtmlString('<p class="text-sm text-gray-400 italic">Tidak ada artikel yang cocok.</p>');
                                 }
 
+                                // 4. Hitung skor relevansi per artikel:
+                                //    +3 per keyword yang match di title (judul lebih relevan)
+                                //    +1 per keyword yang match di content
+                                //    +2 bonus jika keyword dari subject (bukan kategori) match di title
+                                $scored = $pool->map(function ($article) use ($allKeywords, $subjectKeywords) {
+                                    $score        = 0;
+                                    $titleLower   = strtolower($article->title);
+                                    $contentLower = strtolower(strip_tags($article->content ?? ''));
+
+                                    foreach ($allKeywords as $kw) {
+                                        if (str_contains($titleLower, $kw))   $score += 3;
+                                        if (str_contains($contentLower, $kw)) $score += 1;
+                                    }
+
+                                    foreach ($subjectKeywords as $kw) {
+                                        if (str_contains($titleLower, $kw)) $score += 2;
+                                    }
+
+                                    return ['article' => $article, 'score' => $score];
+                                })->sortByDesc('score')->take(4);
+
+                                // 5. Render hasil dengan badge skor relevansi
                                 $html = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
-                                foreach ($articles as $article) {
-                                    $url = route('filament.admin.resources.articles.view', $article);
-                                    $title = e($article->title);
+                                foreach ($scored as $item) {
+                                    $article  = $item['article'];
+                                    $score    = $item['score'];
+                                    $url      = route('filament.admin.resources.articles.view', $article);
+                                    $title    = e($article->title);
+                                    $badgeColor = $score >= 8 ? '#16a34a' : ($score >= 4 ? '#d97706' : '#6b7280');
                                     $html .= <<<HTML
-                                        <a href="{$url}" target="_blank" class="flex items-center gap-2 p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm text-primary-600 dark:text-primary-400 hover:underline">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                                            <span class="truncate">{$title}</span>
+                                        <a href="{$url}" target="_blank" class="flex items-center gap-2 p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                            <span class="truncate flex-1 text-primary-600 dark:text-primary-400 hover:underline">{$title}</span>
+                                            <span class="text-xs font-medium px-1.5 py-0.5 rounded-full text-white flex-shrink-0" style="background-color:{$badgeColor}">{$score}</span>
                                         </a>
                                     HTML;
                                 }

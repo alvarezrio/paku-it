@@ -4,6 +4,8 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\Login;
 use App\Filament\Pages\Register;
+use App\Filament\Pages\ThemeColorPage;
+use App\Http\Middleware\ApplyUserThemeColor;
 use App\Models\User;
 use App\Settings\KaidoSetting;
 use Filament\Http\Middleware\Authenticate;
@@ -14,14 +16,13 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\UserMenuItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
-use Hasnayeen\Themes\Http\Middleware\SetTheme;
-use Hasnayeen\Themes\ThemesPlugin;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -89,9 +90,13 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop(true)
             ->authMiddleware([
                 Authenticate::class,
+                ApplyUserThemeColor::class,
             ])
-            ->middleware([
-                SetTheme::class
+            ->userMenuItems([
+                UserMenuItem::make()
+                    ->label('Warna Tema')
+                    ->icon('heroicon-o-swatch')
+                    ->url(fn() => ThemeColorPage::getUrl()),
             ])
             ->plugins(
                 $this->getPlugins()
@@ -121,7 +126,6 @@ class AdminPanelProvider extends PanelProvider
     private function getPlugins(): array
     {
         $plugins = [
-            ThemesPlugin::make(),
             FilamentShieldPlugin::make(),
             ApiServicePlugin::make(),
             BreezyCore::make()
